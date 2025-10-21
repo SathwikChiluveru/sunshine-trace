@@ -4,7 +4,16 @@ const fs = require('fs');
 const app = express();
 const port = 5000;
 const cors = require('cors');
-app.use(cors()); 
+
+const corsOptions = {
+  origin: 'https://sunshine-trace.vercel.app', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+  credentials: true, 
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
 
 // Define paths to the JSON files
 const findingsFilePath = path.join(__dirname, '/reports/findings.json');

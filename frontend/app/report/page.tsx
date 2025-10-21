@@ -35,7 +35,7 @@ export default function DebugReport() {
 
   useEffect(() => {
     // Fetch summary data from backend API
-    fetch("http://localhost:5000/api/summary")
+    fetch("https://sunshine-trace-u7fl.vercel.app/api/summary")
       .then((response) => response.json())
       .then((data) => setSummaryData(data))
       .catch((error) => console.error("Error fetching summary data:", error))
@@ -43,7 +43,7 @@ export default function DebugReport() {
 
   useEffect(() => {
     // Fetch findings data from the correct API
-    fetch("http://localhost:5000/api/findings")
+    fetch("https://sunshine-trace-u7fl.vercel.app/api/findings")
       .then((response) => response.json())
       .then((data) => {
         setFindingsData(data);
