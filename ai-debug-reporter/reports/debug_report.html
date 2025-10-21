@@ -1,0 +1,652 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Debug Report – ai-debug-reporter</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:20px;line-height:1.45}
+h1,h2{margin:.2em 0 .4em}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ddd;padding:8px}
+th{background:#f7f7f7}
+#heatmap div{padding:6px;margin:4px 0}
+.badge{background:#eee;padding:2px 6px;border-radius:4px}
+@media print {.no-print{display:none}}
+</style>
+</head>
+<body>
+<!-- Header -->
+<h1>
+Smart Debugging Report
+<span class="badge">2025-10-16T06:02:19.903Z</span>
+</h1>
+<p>
+<b>Repo:</b> ai-debug-reporter &nbsp;•&nbsp;
+<b>Commit:</b> unknown
+</p>
+<button class="no-print" onclick="window.print()">Save as PDF</button>
+<!-- AI Executive Summary (populated from summary.json if present) -->
+<h2>AI Executive Summary</h2>
+<div id="ai-summary">
+<p id="ai-executive">Summary unavailable.</p>
+<h3>Top Risks</h3>
+<ul id="ai-risks"></ul>
+<h3>Recommended Actions</h3>
+<ol id="ai-actions"></ol>
+</div>
+<!-- Heatmap -->
+<h2>High-Risk Modules (Heatmap)</h2>
+<div id="heatmap"></div>
+<!-- Recurring Problems -->
+<h2>Recurring Problems</h2>
+<ol>
+
+<li>
+<b>#-#-# #:#:# ERROR EpisodeService - NullPointerException at EpisodeService.java:#</b> — 1 hits<br/>
+Hint: Triage needed<br/>
+Fix: Add guard / validate inputs
+</li>
+
+<li>
+<b>#-#-# #:#:# FATAL EpisodeService - System crashed due to null dischargeType</b> — 1 hits<br/>
+Hint: Triage needed<br/>
+Fix: Add guard / validate inputs
+</li>
+
+<li>
+<b>#-#-# #:#:# ERROR PatientService - Database connection timeout at PatientService.java:#</b> — 1 hits<br/>
+Hint: Triage needed<br/>
+Fix: Add guard / validate inputs
+</li>
+
+<li>
+<b>#-#-# #:#:# ERROR PaymentGateway - Transaction failed for ID TXN-#</b> — 1 hits<br/>
+Hint: Triage needed<br/>
+Fix: Add guard / validate inputs
+</li>
+
+<li>
+<b>#-#-# #:#:# ERROR PaymentGateway - Second failure for transaction TXN-#</b> — 1 hits<br/>
+Hint: Triage needed<br/>
+Fix: Add guard / validate inputs
+</li>
+
+</ol>
+<!-- Error Flows -->
+<h2>Error Flows</h2>
+
+<pre>WARN something  →  ERROR something  →  FATAL crash
+Top: #-#-# #:#:# ERROR EpisodeService - NullPointerException at EpisodeService.java:#</pre>
+
+<pre>WARN something  →  ERROR something  →  FATAL crash
+Top: #-#-# #:#:# FATAL EpisodeService - System crashed due to null dischargeType</pre>
+
+<pre>WARN something  →  ERROR something  →  FATAL crash
+Top: #-#-# #:#:# ERROR PatientService - Database connection timeout at PatientService</pre>
+
+<pre>WARN something  →  ERROR something  →  FATAL crash
+Top: #-#-# #:#:# ERROR PaymentGateway - Transaction failed for ID TXN-#</pre>
+
+<pre>WARN something  →  ERROR something  →  FATAL crash
+Top: #-#-# #:#:# ERROR PaymentGateway - Second failure for transaction TXN-#</pre>
+
+<!-- Logging Quality -->
+<h2>Logging Quality</h2>
+<table>
+<tr><th>Module</th><th>Score</th></tr>
+
+<tr>
+<td>node_modules\async\all.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\allLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\allSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\any.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\anyLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\anySeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\apply.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\applyEach.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\applyEachSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\asyncify.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\auto.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\autoInject.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\cargo.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\cargoQueue.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\compose.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\concat.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\concatLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\concatSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\constant.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\detect.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\detectLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\detectSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\dir.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\dist\async.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\dist\async.min.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\doDuring.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\doUntil.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\doWhilst.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\during.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\each.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\eachLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\eachOf.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\eachOfLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\eachOfSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\eachSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\ensureAsync.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\every.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\everyLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\everySeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\filter.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\filterLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\filterSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\find.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\findLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\findSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\flatMap.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\flatMapLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\flatMapSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\foldl.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\foldr.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEach.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEachLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEachOf.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEachOfLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEachOfSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forEachSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\forever.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\groupBy.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\groupByLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\groupBySeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\index.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\inject.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\applyEach.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\asyncEachOfLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\awaitify.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\breakLoop.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\consoleFunc.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\createTester.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\DoublyLinkedList.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\eachOfLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\filter.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\getIterator.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\Heap.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\initialParams.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\isArrayLike.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\iterator.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\map.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\once.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\onlyOnce.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\parallel.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\promiseCallback.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\queue.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\range.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\reject.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\setImmediate.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\withoutIndex.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\internal\wrapAsync.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\log.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\map.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\mapLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\mapSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\mapValues.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\mapValuesLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\mapValuesSeries.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\memoize.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\nextTick.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\parallel.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\parallelLimit.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\priorityQueue.js</td>
+<td>0/100</td>
+</tr>
+
+<tr>
+<td>node_modules\async\queue.js</td>
+<td>0/100</td>
+</tr>
+
+</table>
+<!-- Sensitive Data Findings -->
+<h2>Sensitive Data Findings</h2>
+
+<ul>
+
+<li>
+<b>NRIC</b> in
+<code>app.log:6</code> — suggest mask last 4 chars
+</li>
+
+</ul>
+<!-- Actionable Fixes -->
+<h2>Actionable Fixes</h2>
+<ul>
+
+<li><b>Remove/Mask NRIC from logs</b> — Owner: backend — Touch: logging middleware / filters</li>
+
+<li><b>Add correlationId to error logs</b> — Owner: backend — Touch: logging config</li>
+
+</ul>
+<!-- Embed data blocks as JSON so VS Code doesn’t flag EJS inside JS -->
+<script id="risk-data" type="application/json">[{"module":"node_modules\\async\\all.js","risk":52},{"module":"node_modules\\async\\allLimit.js","risk":52},{"module":"node_modules\\async\\allSeries.js","risk":52},{"module":"node_modules\\async\\any.js","risk":52},{"module":"node_modules\\async\\anyLimit.js","risk":52},{"module":"node_modules\\async\\anySeries.js","risk":52},{"module":"node_modules\\async\\apply.js","risk":52},{"module":"node_modules\\async\\applyEach.js","risk":52},{"module":"node_modules\\async\\applyEachSeries.js","risk":52},{"module":"node_modules\\async\\asyncify.js","risk":52},{"module":"node_modules\\async\\auto.js","risk":52},{"module":"node_modules\\async\\autoInject.js","risk":52},{"module":"node_modules\\async\\cargo.js","risk":52},{"module":"node_modules\\async\\cargoQueue.js","risk":52},{"module":"node_modules\\async\\compose.js","risk":52},{"module":"node_modules\\async\\concat.js","risk":52},{"module":"node_modules\\async\\concatLimit.js","risk":52},{"module":"node_modules\\async\\concatSeries.js","risk":52},{"module":"node_modules\\async\\constant.js","risk":52},{"module":"node_modules\\async\\detect.js","risk":52},{"module":"node_modules\\async\\detectLimit.js","risk":52},{"module":"node_modules\\async\\detectSeries.js","risk":52},{"module":"node_modules\\async\\dir.js","risk":52},{"module":"node_modules\\async\\dist\\async.js","risk":52},{"module":"node_modules\\async\\dist\\async.min.js","risk":52},{"module":"node_modules\\async\\doDuring.js","risk":52},{"module":"node_modules\\async\\doUntil.js","risk":52},{"module":"node_modules\\async\\doWhilst.js","risk":52},{"module":"node_modules\\async\\during.js","risk":52},{"module":"node_modules\\async\\each.js","risk":52},{"module":"node_modules\\async\\eachLimit.js","risk":52},{"module":"node_modules\\async\\eachOf.js","risk":52},{"module":"node_modules\\async\\eachOfLimit.js","risk":52},{"module":"node_modules\\async\\eachOfSeries.js","risk":52},{"module":"node_modules\\async\\eachSeries.js","risk":52},{"module":"node_modules\\async\\ensureAsync.js","risk":52},{"module":"node_modules\\async\\every.js","risk":52},{"module":"node_modules\\async\\everyLimit.js","risk":52},{"module":"node_modules\\async\\everySeries.js","risk":52},{"module":"node_modules\\async\\filter.js","risk":52},{"module":"node_modules\\async\\filterLimit.js","risk":52},{"module":"node_modules\\async\\filterSeries.js","risk":52},{"module":"node_modules\\async\\find.js","risk":52},{"module":"node_modules\\async\\findLimit.js","risk":52},{"module":"node_modules\\async\\findSeries.js","risk":52},{"module":"node_modules\\async\\flatMap.js","risk":52},{"module":"node_modules\\async\\flatMapLimit.js","risk":52},{"module":"node_modules\\async\\flatMapSeries.js","risk":52},{"module":"node_modules\\async\\foldl.js","risk":52},{"module":"node_modules\\async\\foldr.js","risk":52},{"module":"node_modules\\async\\forEach.js","risk":52},{"module":"node_modules\\async\\forEachLimit.js","risk":52},{"module":"node_modules\\async\\forEachOf.js","risk":52},{"module":"node_modules\\async\\forEachOfLimit.js","risk":52},{"module":"node_modules\\async\\forEachOfSeries.js","risk":52},{"module":"node_modules\\async\\forEachSeries.js","risk":52},{"module":"node_modules\\async\\forever.js","risk":52},{"module":"node_modules\\async\\groupBy.js","risk":52},{"module":"node_modules\\async\\groupByLimit.js","risk":52},{"module":"node_modules\\async\\groupBySeries.js","risk":52},{"module":"node_modules\\async\\index.js","risk":52},{"module":"node_modules\\async\\inject.js","risk":52},{"module":"node_modules\\async\\internal\\applyEach.js","risk":52},{"module":"node_modules\\async\\internal\\asyncEachOfLimit.js","risk":52},{"module":"node_modules\\async\\internal\\awaitify.js","risk":52},{"module":"node_modules\\async\\internal\\breakLoop.js","risk":52},{"module":"node_modules\\async\\internal\\consoleFunc.js","risk":52},{"module":"node_modules\\async\\internal\\createTester.js","risk":52},{"module":"node_modules\\async\\internal\\DoublyLinkedList.js","risk":52},{"module":"node_modules\\async\\internal\\eachOfLimit.js","risk":52},{"module":"node_modules\\async\\internal\\filter.js","risk":52},{"module":"node_modules\\async\\internal\\getIterator.js","risk":52},{"module":"node_modules\\async\\internal\\Heap.js","risk":52},{"module":"node_modules\\async\\internal\\initialParams.js","risk":52},{"module":"node_modules\\async\\internal\\isArrayLike.js","risk":52},{"module":"node_modules\\async\\internal\\iterator.js","risk":52},{"module":"node_modules\\async\\internal\\map.js","risk":52},{"module":"node_modules\\async\\internal\\once.js","risk":52},{"module":"node_modules\\async\\internal\\onlyOnce.js","risk":52},{"module":"node_modules\\async\\internal\\parallel.js","risk":52},{"module":"node_modules\\async\\internal\\promiseCallback.js","risk":52},{"module":"node_modules\\async\\internal\\queue.js","risk":52},{"module":"node_modules\\async\\internal\\range.js","risk":52},{"module":"node_modules\\async\\internal\\reject.js","risk":52},{"module":"node_modules\\async\\internal\\setImmediate.js","risk":52},{"module":"node_modules\\async\\internal\\withoutIndex.js","risk":52},{"module":"node_modules\\async\\internal\\wrapAsync.js","risk":52},{"module":"node_modules\\async\\log.js","risk":52},{"module":"node_modules\\async\\map.js","risk":52},{"module":"node_modules\\async\\mapLimit.js","risk":52},{"module":"node_modules\\async\\mapSeries.js","risk":52},{"module":"node_modules\\async\\mapValues.js","risk":52},{"module":"node_modules\\async\\mapValuesLimit.js","risk":52},{"module":"node_modules\\async\\mapValuesSeries.js","risk":52},{"module":"node_modules\\async\\memoize.js","risk":52},{"module":"node_modules\\async\\nextTick.js","risk":52},{"module":"node_modules\\async\\parallel.js","risk":52},{"module":"node_modules\\async\\parallelLimit.js","risk":52},{"module":"node_modules\\async\\priorityQueue.js","risk":52},{"module":"node_modules\\async\\queue.js","risk":52},{"module":"node_modules\\async\\race.js","risk":52},{"module":"node_modules\\async\\reduce.js","risk":52},{"module":"node_modules\\async\\reduceRight.js","risk":52},{"module":"node_modules\\async\\reflect.js","risk":52},{"module":"node_modules\\async\\reflectAll.js","risk":52},{"module":"node_modules\\async\\reject.js","risk":52},{"module":"node_modules\\async\\rejectLimit.js","risk":52},{"module":"node_modules\\async\\rejectSeries.js","risk":52},{"module":"node_modules\\async\\retry.js","risk":52},{"module":"node_modules\\async\\retryable.js","risk":52},{"module":"node_modules\\async\\select.js","risk":52},{"module":"node_modules\\async\\selectLimit.js","risk":52},{"module":"node_modules\\async\\selectSeries.js","risk":52},{"module":"node_modules\\async\\seq.js","risk":52},{"module":"node_modules\\async\\series.js","risk":52},{"module":"node_modules\\async\\setImmediate.js","risk":52},{"module":"node_modules\\async\\some.js","risk":52},{"module":"node_modules\\async\\someLimit.js","risk":52},{"module":"node_modules\\async\\someSeries.js","risk":52},{"module":"node_modules\\async\\sortBy.js","risk":52},{"module":"node_modules\\async\\timeout.js","risk":52},{"module":"node_modules\\async\\times.js","risk":52},{"module":"node_modules\\async\\timesLimit.js","risk":52},{"module":"node_modules\\async\\timesSeries.js","risk":52},{"module":"node_modules\\async\\transform.js","risk":52},{"module":"node_modules\\async\\tryEach.js","risk":52},{"module":"node_modules\\async\\unmemoize.js","risk":52},{"module":"node_modules\\async\\until.js","risk":52},{"module":"node_modules\\async\\waterfall.js","risk":52},{"module":"node_modules\\async\\whilst.js","risk":52},{"module":"node_modules\\async\\wrapSync.js","risk":52},{"module":"node_modules\\balanced-match\\index.js","risk":52},{"module":"node_modules\\brace-expansion\\index.js","risk":52},{"module":"node_modules\\concat-map\\example\\map.js","risk":52},{"module":"node_modules\\concat-map\\index.js","risk":52},{"module":"node_modules\\concat-map\\test\\map.js","risk":52},{"module":"node_modules\\ejs\\bin\\cli.js","risk":52},{"module":"node_modules\\ejs\\ejs.js","risk":52},{"module":"node_modules\\ejs\\ejs.min.js","risk":52},{"module":"node_modules\\ejs\\jakefile.js","risk":52},{"module":"node_modules\\ejs\\lib\\ejs.js","risk":52},{"module":"node_modules\\ejs\\lib\\utils.js","risk":52},{"module":"node_modules\\filelist\\index.d.ts","risk":52},{"module":"node_modules\\filelist\\index.js","risk":52},{"module":"node_modules\\filelist\\jakefile.js","risk":52},{"module":"node_modules\\filelist\\node_modules\\brace-expansion\\index.js","risk":52},{"module":"node_modules\\filelist\\node_modules\\minimatch\\lib\\path.js","risk":52},{"module":"node_modules\\filelist\\node_modules\\minimatch\\minimatch.js","risk":52},{"module":"node_modules\\fs.realpath\\index.js","risk":52},{"module":"node_modules\\fs.realpath\\old.js","risk":52},{"module":"node_modules\\glob\\common.js","risk":52},{"module":"node_modules\\glob\\glob.js","risk":52},{"module":"node_modules\\glob\\sync.js","risk":52},{"module":"node_modules\\inflight\\inflight.js","risk":52},{"module":"node_modules\\inherits\\inherits_browser.js","risk":52},{"module":"node_modules\\inherits\\inherits.js","risk":52},{"module":"node_modules\\jake\\bin\\cli.js","risk":52},{"module":"node_modules\\jake\\jakefile.js","risk":52},{"module":"node_modules\\jake\\lib\\loader.js","risk":52},{"module":"node_modules\\jake\\lib\\namespace.js","risk":52},{"module":"node_modules\\jake\\lib\\package_task.js","risk":52},{"module":"node_modules\\jake\\lib\\parseargs.js","risk":52},{"module":"node_modules\\jake\\lib\\publish_task.js","risk":52},{"module":"node_modules\\jake\\lib\\rule.js","risk":52},{"module":"node_modules\\jake\\lib\\task\\directory_task.js","risk":52},{"module":"node_modules\\jake\\lib\\task\\file_task.js","risk":52},{"module":"node_modules\\jake\\lib\\task\\index.js","risk":52},{"module":"node_modules\\jake\\lib\\task\\task.js","risk":52},{"module":"node_modules\\jake\\lib\\utils\\file.js","risk":52},{"module":"node_modules\\jake\\lib\\utils\\index.js","risk":52},{"module":"node_modules\\jake\\lib\\utils\\logger.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\concurrent.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\file_task.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\file.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\helpers.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\jakefile.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\jakelib\\concurrent.jake.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\jakelib\\publish.jake.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\jakelib\\required_module.jake.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\jakelib\\rule.jake.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\list_tasks.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\publish_task.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\rule.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\selfdep.js","risk":52},{"module":"node_modules\\jake\\test\\integration\\task_base.js","risk":52},{"module":"node_modules\\jake\\test\\unit\\jakefile.js","risk":52},{"module":"node_modules\\jake\\test\\unit\\namespace.js","risk":52},{"module":"node_modules\\jake\\test\\unit\\parseargs.js","risk":52},{"module":"node_modules\\minimatch\\minimatch.js","risk":52},{"module":"node_modules\\minimist\\example\\parse.js","risk":52},{"module":"node_modules\\minimist\\index.js","risk":52},{"module":"node_modules\\minimist\\test\\all_bool.js","risk":52},{"module":"node_modules\\minimist\\test\\bool.js","risk":52},{"module":"node_modules\\minimist\\test\\dash.js","risk":52},{"module":"node_modules\\minimist\\test\\default_bool.js","risk":52},{"module":"node_modules\\minimist\\test\\dotted.js","risk":52},{"module":"node_modules\\jake\\lib\\api.js","risk":39},{"module":"node_modules\\jake\\lib\\jake.js","risk":39},{"module":"node_modules\\jake\\lib\\program.js","risk":39},{"module":"node_modules\\jake\\lib\\test_task.js","risk":39}]</script>
+<script id="ai-summary-data" type="application/json">
+{"executive_summary":"The system analysis reveals high-risk dependencies in the node_modules directory, particularly within the async library and related utilities, with risk scores of 52 across multiple modules. Additionally, recurring errors such as NullPointerException, null dischargeType, database timeouts, and payment transaction failures indicate potential stability and input validation issues. Logging practices are inconsistent, with several modules scoring zero on logging quality, and sensitive information like NRIC numbers found in logs requiring masking. There is also a lack of correlation IDs in error logs which hampers debugging.","top_risks":["High-risk dependencies in node_modules\\async and related modules with risk score 52","Recurring NullPointerException and null dischargeType errors in EpisodeService","Database connection timeouts in PatientService","Payment gateway transaction failures in PaymentGateway","Sensitive PII (NRIC) exposure in logs without masking","Inconsistent logging quality with zero scores in many modules","Missing correlation IDs in error logs"],"recommended_actions":["Mask last four characters of NRIC numbers in logs using logging middleware or filters","Add correlationId to all error logs for improved traceability","Implement input validation and guards in services experiencing NullPointerException and null dischargeType","Address database connection timeouts in PatientService by adding retry logic or connection pooling","Improve logging consistency across modules with zero logging scores","Review and enhance error handling in PaymentGateway for transaction failures"]}
+</script>
+<!-- Client-side rendering for heatmap and AI section -->
+<script>
+// Heatmap
+(function(){
+const data = JSON.parse(document.getElementById('risk-data').textContent || '[]');
+const el = document.getElementById('heatmap');
+data.sort((a,b)=>b.risk-a.risk).slice(0,30).forEach(d=>{
+const div=document.createElement('div');
+div.textContent = `${d.module} — ${d.risk}`;
+div.style.background=`rgba(255,0,0,${Math.min(1, d.risk/100)})`;
+el.appendChild(div);
+});
+})();
+// AI summary
+(function(){
+const ai = JSON.parse(document.getElementById('ai-summary-data').textContent || '{}');
+document.getElementById('ai-executive').textContent = ai.executive_summary || 'Summary unavailable.';
+(ai.top_risks || []).forEach(r => {
+const li = document.createElement('li'); li.textContent = r;
+document.getElementById('ai-risks').appendChild(li);
+});
+(ai.recommended_actions || []).forEach(a => {
+const li = document.createElement('li'); li.textContent = a;
+document.getElementById('ai-actions').appendChild(li);
+});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+2025-10-16 14:10:21 INFO  UserService - User login successful for user: alice
+2025-10-16 14:12:47 ERROR EpisodeService - NullPointerException at EpisodeService.java:231
+2025-10-16 14:12:48 WARN  EpisodeService - Missing dischargeType field for patient
+2025-10-16 14:12:49 FATAL EpisodeService - System crashed due to null dischargeType
+
+2025-10-16 15:00:01 INFO  AuditLog - Request received from patient NRIC S1234567D
+2025-10-16 15:00:03 ERROR PatientService - Database connection timeout at PatientService.java:45
+2025-10-16 15:00:04 ERROR PaymentGateway - Transaction failed for ID TXN-8842
+2025-10-16 15:00:05 INFO  PaymentGateway - Retrying transaction TXN-8842
+2025-10-16 15:00:07 ERROR PaymentGateway - Second failure for transaction TXN-8842

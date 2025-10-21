@@ -1,0 +1,2011 @@
+{
+  "runMeta": {
+    "repo": "ai-debug-reporter",
+    "ts": "2025-10-16T06:02:19.903Z",
+    "commit": "unknown"
+  },
+  "riskHeatmap": [
+    {
+      "module": "node_modules\\async\\all.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\allLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\allSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\any.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\anyLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\anySeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\apply.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\applyEach.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\applyEachSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\asyncify.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\auto.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\autoInject.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\cargo.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\cargoQueue.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\compose.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\concat.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\concatLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\concatSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\constant.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\detect.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\detectLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\detectSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\dir.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\dist\\async.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\dist\\async.min.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\doDuring.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\doUntil.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\doWhilst.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\during.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\each.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\eachLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\eachOf.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\eachOfLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\eachOfSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\eachSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\ensureAsync.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\every.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\everyLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\everySeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\filter.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\filterLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\filterSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\find.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\findLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\findSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\flatMap.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\flatMapLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\flatMapSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\foldl.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\foldr.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEach.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEachLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEachOf.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEachOfLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEachOfSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forEachSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\forever.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\groupBy.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\groupByLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\groupBySeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\inject.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\applyEach.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\asyncEachOfLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\awaitify.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\breakLoop.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\consoleFunc.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\createTester.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\DoublyLinkedList.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\eachOfLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\filter.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\getIterator.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\Heap.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\initialParams.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\isArrayLike.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\iterator.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\map.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\once.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\onlyOnce.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\parallel.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\promiseCallback.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\queue.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\range.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\reject.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\setImmediate.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\withoutIndex.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\internal\\wrapAsync.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\log.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\map.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\mapLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\mapSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\mapValues.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\mapValuesLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\mapValuesSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\memoize.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\nextTick.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\parallel.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\parallelLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\priorityQueue.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\queue.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\race.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\reduce.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\reduceRight.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\reflect.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\reflectAll.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\reject.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\rejectLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\rejectSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\retry.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\retryable.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\select.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\selectLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\selectSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\seq.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\series.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\setImmediate.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\some.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\someLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\someSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\sortBy.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\timeout.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\times.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\timesLimit.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\timesSeries.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\transform.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\tryEach.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\unmemoize.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\until.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\waterfall.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\whilst.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\async\\wrapSync.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\balanced-match\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\brace-expansion\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\concat-map\\example\\map.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\concat-map\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\concat-map\\test\\map.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\bin\\cli.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\ejs.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\ejs.min.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\jakefile.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\lib\\ejs.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\ejs\\lib\\utils.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\index.d.ts",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\jakefile.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\brace-expansion\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\minimatch\\lib\\path.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\minimatch\\minimatch.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\fs.realpath\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\fs.realpath\\old.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\glob\\common.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\glob\\glob.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\glob\\sync.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\inflight\\inflight.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\inherits\\inherits_browser.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\inherits\\inherits.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\bin\\cli.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\jakefile.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\loader.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\namespace.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\package_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\parseargs.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\publish_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\rule.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\directory_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\file_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\file.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\logger.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\concurrent.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\file_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\file.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\helpers.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakefile.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\concurrent.jake.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\publish.jake.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\required_module.jake.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\rule.jake.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\list_tasks.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\publish_task.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\rule.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\selfdep.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\task_base.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\jakefile.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\namespace.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\parseargs.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimatch\\minimatch.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\example\\parse.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\index.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\test\\all_bool.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\test\\bool.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\test\\dash.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\test\\default_bool.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\minimist\\test\\dotted.js",
+      "risk": 52
+    },
+    {
+      "module": "node_modules\\jake\\lib\\api.js",
+      "risk": 39
+    },
+    {
+      "module": "node_modules\\jake\\lib\\jake.js",
+      "risk": 39
+    },
+    {
+      "module": "node_modules\\jake\\lib\\program.js",
+      "risk": 39
+    },
+    {
+      "module": "node_modules\\jake\\lib\\test_task.js",
+      "risk": 39
+    }
+  ],
+  "recurringProblems": [
+    {
+      "signature": "#-#-# #:#:# ERROR EpisodeService - NullPointerException at EpisodeService.java:#",
+      "count": 1,
+      "files": [],
+      "rootCauseHint": "Triage needed",
+      "recommendedFix": "Add guard / validate inputs"
+    },
+    {
+      "signature": "#-#-# #:#:# FATAL EpisodeService - System crashed due to null dischargeType",
+      "count": 1,
+      "files": [],
+      "rootCauseHint": "Triage needed",
+      "recommendedFix": "Add guard / validate inputs"
+    },
+    {
+      "signature": "#-#-# #:#:# ERROR PatientService - Database connection timeout at PatientService.java:#",
+      "count": 1,
+      "files": [],
+      "rootCauseHint": "Triage needed",
+      "recommendedFix": "Add guard / validate inputs"
+    },
+    {
+      "signature": "#-#-# #:#:# ERROR PaymentGateway - Transaction failed for ID TXN-#",
+      "count": 1,
+      "files": [],
+      "rootCauseHint": "Triage needed",
+      "recommendedFix": "Add guard / validate inputs"
+    },
+    {
+      "signature": "#-#-# #:#:# ERROR PaymentGateway - Second failure for transaction TXN-#",
+      "count": 1,
+      "files": [],
+      "rootCauseHint": "Triage needed",
+      "recommendedFix": "Add guard / validate inputs"
+    }
+  ],
+  "errorFlows": [
+    {
+      "path": [
+        "WARN something",
+        "ERROR something",
+        "FATAL gone bro"
+      ],
+      "stackTop": "#-#-# #:#:# ERROR EpisodeService - NullPointerException at EpisodeService.java:#"
+    },
+    {
+      "path": [
+        "WARN something",
+        "ERROR something",
+        "FATAL mad bro"
+      ],
+      "stackTop": "#-#-# #:#:# FATAL EpisodeService - System crashed due to null dischargeType"
+    },
+    {
+      "path": [
+        "WARN something",
+        "ERROR something",
+        "FATAL dead bro"
+      ],
+      "stackTop": "#-#-# #:#:# ERROR PatientService - Database connection timeout at PatientService"
+    },
+    {
+      "path": [
+        "WARN something",
+        "ERROR something",
+        "FATAL crash"
+      ],
+      "stackTop": "#-#-# #:#:# ERROR PaymentGateway - Transaction failed for ID TXN-#"
+    },
+    {
+      "path": [
+        "WARN something",
+        "ERROR something",
+        "FATAL crash"
+      ],
+      "stackTop": "#-#-# #:#:# ERROR PaymentGateway - Second failure for transaction TXN-#"
+    }
+  ],
+  "loggingScores": [
+    {
+      "module": "node_modules\\async\\all.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\allLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\allSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\any.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\anyLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\anySeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\apply.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\applyEach.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\applyEachSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\asyncify.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\auto.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\autoInject.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\cargo.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\cargoQueue.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\compose.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\concat.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\concatLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\concatSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\constant.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\detect.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\detectLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\detectSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\dir.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\dist\\async.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\dist\\async.min.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\doDuring.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\doUntil.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\doWhilst.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\during.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\each.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\eachLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\eachOf.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\eachOfLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\eachOfSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\eachSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\ensureAsync.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\every.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\everyLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\everySeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\filter.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\filterLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\filterSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\find.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\findLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\findSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\flatMap.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\flatMapLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\flatMapSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\foldl.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\foldr.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEach.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEachLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEachOf.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEachOfLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEachOfSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forEachSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\forever.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\groupBy.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\groupByLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\groupBySeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\inject.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\applyEach.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\asyncEachOfLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\awaitify.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\breakLoop.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\consoleFunc.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\createTester.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\DoublyLinkedList.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\eachOfLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\filter.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\getIterator.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\Heap.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\initialParams.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\isArrayLike.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\iterator.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\map.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\once.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\onlyOnce.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\parallel.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\promiseCallback.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\queue.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\range.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\reject.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\setImmediate.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\withoutIndex.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\internal\\wrapAsync.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\log.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\map.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\mapLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\mapSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\mapValues.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\mapValuesLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\mapValuesSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\memoize.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\nextTick.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\parallel.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\parallelLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\priorityQueue.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\queue.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\race.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\reduce.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\reduceRight.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\reflect.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\reflectAll.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\reject.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\rejectLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\rejectSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\retry.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\retryable.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\select.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\selectLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\selectSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\seq.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\series.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\setImmediate.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\some.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\someLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\someSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\sortBy.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\timeout.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\times.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\timesLimit.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\timesSeries.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\transform.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\tryEach.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\unmemoize.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\until.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\waterfall.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\whilst.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\async\\wrapSync.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\balanced-match\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\brace-expansion\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\concat-map\\example\\map.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\concat-map\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\concat-map\\test\\map.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\bin\\cli.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\ejs.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\ejs.min.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\jakefile.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\lib\\ejs.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\ejs\\lib\\utils.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\index.d.ts",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\jakefile.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\brace-expansion\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\minimatch\\lib\\path.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\filelist\\node_modules\\minimatch\\minimatch.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\fs.realpath\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\fs.realpath\\old.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\glob\\common.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\glob\\glob.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\glob\\sync.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\inflight\\inflight.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\inherits\\inherits_browser.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\inherits\\inherits.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\bin\\cli.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\jakefile.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\api.js",
+      "score": 33,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\jake.js",
+      "score": 33,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\loader.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\namespace.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\package_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\parseargs.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\program.js",
+      "score": 33,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\publish_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\rule.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\directory_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\file_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\task\\task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\test_task.js",
+      "score": 33,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\file.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\lib\\utils\\logger.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\concurrent.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\file_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\file.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\helpers.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakefile.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\concurrent.jake.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\publish.jake.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\required_module.jake.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\jakelib\\rule.jake.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\list_tasks.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\publish_task.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\rule.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\selfdep.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\integration\\task_base.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\jakefile.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\namespace.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\jake\\test\\unit\\parseargs.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimatch\\minimatch.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\example\\parse.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\all_bool.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\bool.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\dash.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\default_bool.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\dotted.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\kv_short.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\long.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\num.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\parse_modified.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\parse.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\proto.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\short.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\stop_early.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\unknown.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\minimist\\test\\whitespace.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\once\\once.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\path-is-absolute\\index.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\picocolors\\picocolors.browser.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\picocolors\\picocolors.d.ts",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\picocolors\\picocolors.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\picocolors\\types.d.ts",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "node_modules\\wrappy\\wrappy.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "packages\\debug-report-cli\\bin\\debug-report.js",
+      "score": 67,
+      "gaps": []
+    },
+    {
+      "module": "tools\\ai-summarizer\\summarizer.js",
+      "score": 0,
+      "gaps": []
+    },
+    {
+      "module": "tools\\report-renderer\\render.js",
+      "score": 0,
+      "gaps": []
+    }
+  ],
+  "piiFindings": [
+    {
+      "type": "NRIC",
+      "file": "app.log",
+      "line": 6,
+      "sample": "S1234567D",
+      "action": "mask last 4 chars"
+    }
+  ],
+  "actions": [
+    {
+      "title": "Remove/Mask NRIC from logs",
+      "owner": "backend",
+      "diffHint": "logging middleware / filters"
+    },
+    {
+      "title": "Add correlationId to error logs",
+      "owner": "backend",
+      "diffHint": "logging config"
+    }
+  ]
+}

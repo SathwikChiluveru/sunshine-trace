@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Debug Report – <%= runMeta.repo %></title>
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;margin:20px;line-height:1.45}
+    h1,h2{margin:.2em 0 .4em}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ddd;padding:8px}
+    th{background:#f7f7f7}
+    #heatmap div{padding:6px;margin:4px 0}
+    .badge{background:#eee;padding:2px 6px;border-radius:4px}
+    @media print {.no-print{display:none}}
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <h1>
+    Smart Debugging Report
+    <span class="badge"><%= runMeta.ts %></span>
+  </h1>
+  <p>
+    <b>Repo:</b> <%= runMeta.repo %> &nbsp;•&nbsp;
+    <b>Commit:</b> <%= runMeta.commit %>
+  </p>
+  <button class="no-print" onclick="window.print()">Save as PDF</button>
+
+  <!-- AI Executive Summary (populated from summary.json if present) -->
+  <h2>AI Executive Summary</h2>
+  <div id="ai-summary">
+    <p id="ai-executive">Summary unavailable.</p>
+    <h3>Top Risks</h3>
+    <ul id="ai-risks"></ul>
+    <h3>Recommended Actions</h3>
+    <ol id="ai-actions"></ol>
+  </div>
+
+  <!-- Heatmap -->
+  <h2>High-Risk Modules (Heatmap)</h2>
+  <div id="heatmap"></div>
+
+  <!-- Recurring Problems -->
+  <h2>Recurring Problems</h2>
+  <ol>
+    <% recurringProblems.forEach(p=>{ %>
+      <li>
+        <b><%= p.signature %></b> — <%= p.count %> hits<br/>
+        Hint: <%= p.rootCauseHint %><br/>
+        Fix: <%= p.recommendedFix %>
+      </li>
+    <% }) %>
+  </ol>
+
+  <!-- Error Flows -->
+  <h2>Error Flows</h2>
+  <% errorFlows.forEach(f=>{ %>
+    <pre><%= f.path.join('  →  ') %>
+Top: <%= f.stackTop %></pre>
+  <% }) %>
+
+  <!-- Logging Quality -->
+  <h2>Logging Quality</h2>
+  <table>
+    <tr><th>Module</th><th>Score</th></tr>
+    <% loggingScores.slice(0,100).forEach(m=>{ %>
+      <tr>
+        <td><%= m.module %></td>
+        <td><%= m.score %>/100</td>
+      </tr>
+    <% }) %>
+  </table>
+
+  <!-- Sensitive Data Findings -->
+  <h2>Sensitive Data Findings</h2>
+  <% if (!piiFindings.length) { %>
+    <p>No PII found.</p>
+  <% } %>
+  <ul>
+    <% piiFindings.forEach(f=>{ %>
+      <li>
+        <b><%= f.type %></b> in
+        <code><%= f.file %>:<%= f.line %></code> — suggest <%= f.action %>
+      </li>
+    <% }) %>
+  </ul>
+
+  <!-- Actionable Fixes -->
+  <h2>Actionable Fixes</h2>
+  <ul>
+    <% actions.forEach(a=>{ %>
+      <li><b><%= a.title %></b> — Owner: <%= a.owner %> — Touch: <%= a.diffHint %></li>
+    <% }) %>
+  </ul>
+
+  <!-- Embed data blocks as JSON so VS Code doesn’t flag EJS inside JS -->
+  <script id="risk-data" type="application/json"><%- JSON.stringify(riskHeatmap) %></script>
+  <script id="ai-summary-data" type="application/json">
+    <%- JSON.stringify(aiSummary) %>
+  </script>
+
+  <!-- Client-side rendering for heatmap and AI section -->
+  <script>
+    // Heatmap
+    (function(){
+      const data = JSON.parse(document.getElementById('risk-data').textContent || '[]');
+      const el = document.getElementById('heatmap');
+      data.sort((a,b)=>b.risk-a.risk).slice(0,30).forEach(d=>{
+        const div=document.createElement('div');
+        div.textContent = `${d.module} — ${d.risk}`;
+        div.style.background=`rgba(255,0,0,${Math.min(1, d.risk/100)})`;
+        el.appendChild(div);
+      });
+    })();
+
+    // AI summary
+    (function(){
+      const ai = JSON.parse(document.getElementById('ai-summary-data').textContent || '{}');
+      document.getElementById('ai-executive').textContent = ai.executive_summary || 'Summary unavailable.';
+      (ai.top_risks || []).forEach(r => {
+        const li = document.createElement('li'); li.textContent = r;
+        document.getElementById('ai-risks').appendChild(li);
+      });
+      (ai.recommended_actions || []).forEach(a => {
+        const li = document.createElement('li'); li.textContent = a;
+        document.getElementById('ai-actions').appendChild(li);
+      });
+    })();
+  </script>
+
+</body>
+</html>

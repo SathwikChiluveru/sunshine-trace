@@ -1,0 +1,23 @@
+{
+  "name": "ai-debug-reporter",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug:report": "node packages/debug-report-cli/bin/debug-report.js --logs \"logs/**/*.log\" --src . --out reports/",
+    "report:summary": "node tools/ai-summarizer/summarizer.js",
+    "report:render": "node tools/report-renderer/render.js reports/findings.json reports/debug_report.html",
+    "report:all": "npm run debug:report && npm run report:summary && npm run report:render"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^3.1.9",
+    "express": "^5.1.0",
+    "glob": "^7.2.3",
+    "minimist": "^1.2.8"
+  }
+}
