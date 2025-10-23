@@ -5,11 +5,11 @@ const path = require('path');
 require('dotenv').config();
 
 // Provider selection: prefer OpenRouter if key present, else internal vLLM
-/*const OR_ENABLED   = !!process.env.OPENROUTER_API_KEY;
+const OR_ENABLED   = !!process.env.OPENROUTER_API_KEY;
 const OR_BASE      = process.env.OPENROUTER_API_BASE || 'https://openrouter.ai/api/v1';
 const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen2.5-vl-32b-instruct:free';
 const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
-const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';*/
+const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';
 
 const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
 const DEVNET_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';

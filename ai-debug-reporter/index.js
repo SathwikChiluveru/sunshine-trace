@@ -294,15 +294,51 @@ app.post('/api/analyze/zip', async (req, res) => {
       riskHeatmap = loggingScores.map(m => ({ module: m.module, risk: Math.max(0, 100 - m.score) }));
     }
 
-    // Summary fallback
+    // Enhanced summary with meaningful insights
     const anyLog = logFiles[0]?.content || '';
     const errCount = (anyLog.match(/\bERROR\b/g) || []).length;
     const warnCount = (anyLog.match(/\bWARN\b/g) || []).length;
     const fatalCount = (anyLog.match(/\bFATAL\b/g) || []).length;
+    const infoCount = (anyLog.match(/\bINFO\b/g) || []).length;
+    
+    // Calculate system health indicators
+    const totalLogs = errCount + warnCount + fatalCount + infoCount;
+    const errorRate = totalLogs > 0 ? (errCount + fatalCount) / totalLogs : 0;
+    const criticalIssues = fatalCount > 0;
+    const highErrorRate = errorRate > 0.1; // 10% error rate threshold
+    
+    // Assess logging quality
+    const avgLoggingScore = loggingScores.length > 0 ? 
+      loggingScores.reduce((sum, m) => sum + m.score, 0) / loggingScores.length : 0;
+    const poorLogging = avgLoggingScore < 50;
+    
+    // Assess security concerns
+    const hasPii = piiFindings.length > 0;
+    const hasErrorFlows = errorFlows.length > 0;
+    
+    // Generate meaningful executive summary
+    let healthStatus = "HEALTHY";
+    if (criticalIssues) healthStatus = "CRITICAL";
+    else if (highErrorRate || poorLogging) healthStatus = "DEGRADED";
+    else if (hasPii || hasErrorFlows) healthStatus = "NEEDS_ATTENTION";
+    
     const summary = aiResults.codebase && !aiResults.codebase.error ? aiResults.codebase : {
-      executive_summary: `AI analysis unavailable or partial. Derived from uploaded logs: Errors=${errCount}, Warnings=${warnCount}, Fatals=${fatalCount}.`,
-      top_risks: [],
-      recommended_actions: []
+      executive_summary: `System Status: ${healthStatus}. ${criticalIssues ? 'CRITICAL: System crashes detected.' : ''} ${highErrorRate ? `High error rate (${Math.round(errorRate*100)}%).` : ''} ${poorLogging ? 'Poor logging practices detected.' : ''} ${hasPii ? 'Sensitive data exposure found.' : ''} ${hasErrorFlows ? 'Error cascade patterns identified.' : ''} ${totalLogs > 0 ? `Analyzed ${totalLogs} log entries.` : 'No log data available.'}`,
+      top_risks: [
+        ...(criticalIssues ? [{ risk: "System Crashes", severity: "CRITICAL", description: `${fatalCount} fatal errors detected` }] : []),
+        ...(highErrorRate ? [{ risk: "High Error Rate", severity: "HIGH", description: `${Math.round(errorRate*100)}% of logs are errors` }] : []),
+        ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
+        ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
+        ...(hasErrorFlows ? [{ risk: "Error Cascades", severity: "MEDIUM", description: `${errorFlows.length} error flow patterns detected` }] : [])
+      ],
+      recommended_actions: [
+        ...(criticalIssues ? ["Immediately investigate and fix fatal errors", "Implement circuit breakers to prevent cascading failures"] : []),
+        ...(highErrorRate ? ["Review error handling patterns", "Add monitoring and alerting for error spikes"] : []),
+        ...(poorLogging ? ["Implement structured logging with correlation IDs", "Add error codes and context to log messages"] : []),
+        ...(hasPii ? ["Mask or remove sensitive data from logs", "Implement data classification and handling policies"] : []),
+        ...(hasErrorFlows ? ["Review error handling chains", "Add proper error boundaries and recovery mechanisms"] : []),
+        ...(totalLogs === 0 ? ["Add comprehensive logging to monitor system health"] : [])
+      ]
     };
 
     res.json({ aiResults, riskHeatmap, loggingScores, piiFindings, errorFlows, summary });

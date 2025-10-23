@@ -1,0 +1,7 @@
+2025-10-23 14:10:00 INFO  [AuthService] - User 'alice' successfully authenticated (IP: 10.1.2.3)
+2025-10-23 14:10:05 INFO  [UserService] - Contact email alice@example.com
+2025-10-23 14:12:00 WARN  EpisodeService - Missing dischargeType field
+2025-10-23 14:12:03 ERROR EpisodeService - NullPointerException at EpisodeService.java:231
+2025-10-23 14:12:05 FATAL EpisodeService - System crashed due to null dischargeType
+2025-10-23 14:14:00 INFO  AuditLog - Request received for NRIC S1234567D
+2025-10-23 14:14:05 DEBUG AuditLog - CorrelationId: 2f5a8c10-0c9f-4e3c-8c11-8c1d2f3e4a55
