@@ -80,7 +80,7 @@ export function FileUploadArea({ onFilesAdded }: FileUploadAreaProps) {
         multiple
         onChange={handleFileInput}
         className="sr-only"
-        accept=".log,.txt,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.cs,.rb,.go,.php,.swift,.kt,.rs"
+        accept=".zip,.log,.txt,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.cs,.rb,.go,.php,.swift,.kt,.rs"
       />
       <label htmlFor="file-upload" className="flex flex-col items-center justify-center px-6 py-12 cursor-pointer">
         <div className="flex items-center justify-center size-16 rounded-full bg-muted mb-4">
@@ -94,7 +94,7 @@ export function FileUploadArea({ onFilesAdded }: FileUploadAreaProps) {
         <p className="text-sm text-muted-foreground text-center max-w-sm">
           Drag and drop files here, paste from clipboard, or click to browse
         </p>
-        <p className="text-xs text-muted-foreground mt-3">Supports .log, .txt, and source code files</p>
+        <p className="text-xs text-muted-foreground mt-3">Supports .zip, .log, .txt, and source code files</p>
       </label>
     </div>
   )

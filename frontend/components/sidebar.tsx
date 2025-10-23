@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, BarChart3, GitBranch, Shield, RefreshCw, Lightbulb, Code2, Brain } from "lucide-react"
+import { Search, BarChart3, GitBranch, Shield, RefreshCw, Lightbulb, Code2, Brain, Bug } from "lucide-react"
 
 interface SidebarProps {
   activeSection: string
@@ -14,6 +14,8 @@ const sections = [
   { id: "logging-quality", label: "Logging Quality", icon: BarChart3 },
   { id: "error-flows", label: "Error Flows", icon: GitBranch },
   { id: "sensitive-data", label: "Sensitive Data", icon: Shield },
+  { id: "ai-sensitive-data", label: "AI Sensitive Data", icon: Brain },
+  { id: "ai-vulnerabilities", label: "AI Vulnerabilities", icon: Bug },
   // { id: "recurring-bugs", label: "Recurring Bugs", icon: RefreshCw },
   { id: "code-improvements", label: "Code Improvements", icon: Code2 },
   { id: "recommendations", label: "Recommendations", icon: Lightbulb },
