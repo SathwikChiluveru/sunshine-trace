@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -173,7 +174,7 @@ app.post('/api/analyze/zip', async (req, res) => {
     zip.extractAllTo(tmpDir, true);
 
     // Collect a limited set of text/code files to avoid huge prompts
-    const exts = ['.js','.ts','.tsx','.py','.java','.go','.rb','.php','.cs','.json','.md'];
+    const exts = ['.js','.ts','.tsx','.py','.java','.go','.rb','.php','.cs','.json','.md','.log'];
     const files = [];
     function walk(dir) {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -224,15 +225,87 @@ app.post('/api/analyze/zip', async (req, res) => {
       aiResults.modules.push(mod);
     }
 
-    // Build a simple findings-like shape for the frontend
-    const riskHeatmap = (aiResults.modules || []).map(m => ({
+    // Fallback analyzers (non-AI) to provide dynamic data even if AI fails
+    function scoreModule(content){
+      const hasErrorCodes = /ERR_\w+|errorCode|code:\s*\w+/i.test(content) ? 1 : 0;
+      const hasCorrId    = /correlation|trace[_-]?id|x-request-id/i.test(content) ? 1 : 0;
+      const structured   = /{[^}]*"level"\s*:\s*"(info|error|warn|debug)"[^}]*}/i.test(content) ? 1 : 0;
+      return Math.round((hasErrorCodes + hasCorrId + structured) / 3 * 100);
+    }
+
+    const loggingScores = limited
+      .filter(f => ['js','ts','tsx','py','java','go','rb','php','cs'].includes((f.fileType||'').toLowerCase()))
+      .map(f => ({ module: f.fileName, score: scoreModule(f.content), gaps: [] }));
+
+    // PII findings from any file + line numbers for .log files
+    const piiFindings = [];
+    const nricRegex = /\b[STFG]\d{7}[A-Z]\b/g;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const phoneRegex = /(\+65|65)?[689]\d{7}/g;
+    for (const f of limited) {
+      if (f.fileName.toLowerCase().endsWith('.log')) {
+        const lines = f.content.split(/\r?\n/);
+        lines.forEach((line, idx) => {
+          for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex], ['PHONE', phoneRegex]]){
+            const m = line.match(rx);
+            if (m){
+              m.forEach(v => piiFindings.push({ type, file: f.fileName, line: idx+1, sample: v, action: type==='NRIC'?'mask last 4 chars':'mask/hash' }))
+            }
+          }
+        })
+      } else {
+        // Scan non-log text without line numbers
+        for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex]]){
+          if (rx.test(f.content)) piiFindings.push({ type, file: f.fileName, line: 0, sample: 'detected', action: type==='NRIC'?'mask last 4 chars':'mask/hash' })
+        }
+      }
+    }
+
+    // Error flows from .log files: simple WARN -> ERROR/FATAL clustering within window
+    const errorFlows = [];
+    const logFiles = limited.filter(f => f.fileName.toLowerCase().endsWith('.log'));
+    for (const f of logFiles) {
+      const lines = f.content.split(/\r?\n/).filter(Boolean);
+      for (let i=0;i<lines.length;i++){
+        const line = lines[i];
+        if (/\bWARN\b/i.test(line)){
+          const path = [line.replace(/^\s+/,'')];
+          let stackTop = '';
+          for (let j=i+1;j<Math.min(i+6, lines.length); j++){
+            const ln = lines[j];
+            if (/\b(ERROR|FATAL)\b/i.test(ln)){
+              path.push(ln.replace(/^\s+/,''));
+              if (!stackTop) stackTop = ln;
+            } else if (/\bINFO\b/i.test(ln)){
+              break;
+            }
+          }
+          if (path.length>1) errorFlows.push({ path, stackTop: stackTop || path[path.length-1] });
+        }
+      }
+    }
+
+    // Risk heatmap: prefer AI risk_score; otherwise derive from loggingScores
+    let riskHeatmap = (aiResults.modules || []).map(m => ({
       module: m.fileName,
       risk: Math.min(100, Math.max(0, Math.round((m?.vulnerabilities?.risk_score || 0))))
     }));
+    if (riskHeatmap.length === 0) {
+      riskHeatmap = loggingScores.map(m => ({ module: m.module, risk: Math.max(0, 100 - m.score) }));
+    }
 
-    const summary = aiResults.codebase || { executive_summary: 'AI codebase summary unavailable', top_risks: [], recommended_actions: [] };
+    // Summary fallback
+    const anyLog = logFiles[0]?.content || '';
+    const errCount = (anyLog.match(/\bERROR\b/g) || []).length;
+    const warnCount = (anyLog.match(/\bWARN\b/g) || []).length;
+    const fatalCount = (anyLog.match(/\bFATAL\b/g) || []).length;
+    const summary = aiResults.codebase && !aiResults.codebase.error ? aiResults.codebase : {
+      executive_summary: `AI analysis unavailable or partial. Derived from uploaded logs: Errors=${errCount}, Warnings=${warnCount}, Fatals=${fatalCount}.`,
+      top_risks: [],
+      recommended_actions: []
+    };
 
-    res.json({ aiResults, riskHeatmap, summary });
+    res.json({ aiResults, riskHeatmap, loggingScores, piiFindings, errorFlows, summary });
   } catch (error) {
     console.error('Zip analysis error:', error);
     res.status(500).json({ error: error.message });

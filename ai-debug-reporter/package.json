@@ -14,7 +14,9 @@
     "ai:quality": "node tools/ai-analyzer/analyzer.js code_quality",
     "ai:risk": "node tools/ai-analyzer/analyzer.js risk_assessment",
     "ai:flow": "node tools/ai-analyzer/analyzer.js error_flow",
-    "ai:codebase": "node tools/ai-analyzer/analyzer.js codebase"
+    "ai:codebase": "node tools/ai-analyzer/analyzer.js codebase",
+    "env:openrouter": "powershell -NoProfile -Command Copy-Item -Force .env.openrouter .env",
+    "env:vllm": "powershell -NoProfile -Command Copy-Item -Force .env.vllm .env"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +28,7 @@
     "express": "^5.1.0",
     "glob": "^7.2.3",
     "minimist": "^1.2.8",
-    "adm-zip": "^0.5.10"
+    "adm-zip": "^0.5.10",
+    "dotenv": "^16.4.5"
   }
 }

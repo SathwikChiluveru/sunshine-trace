@@ -9,15 +9,19 @@ import type { ParsedLogData } from "@/lib/types"
   }
 
   export function LoggingQualitySection({ data }: LoggingQualitySectionProps) {
-    // Check if data and data.loggingScores are defined
-    const modules = data && data.loggingScores ? data.loggingScores.map((sq: any) => ({
+    // Prefer dynamic loggingScores; fallback to serviceQuality
+    const fromScores = Array.isArray(data?.loggingScores) ? data.loggingScores : []
+    const fromServices = Array.isArray(data?.serviceQuality) ? data.serviceQuality.map((sq: any) => ({ module: sq.service, score: sq.score, gaps: sq.issues || [] })) : []
+    const merged = fromScores.length > 0 ? fromScores : fromServices
+    const modules = merged.map((sq: any) => ({
       name: sq.module || sq.service,
-      score: sq.score,
-      missingLogs: Math.max(0, 100 - sq.score) / 5, // HARDCODED calculation
-      verboseLogs: sq.gaps ? sq.gaps.length * 2 : (sq.issues ? sq.issues.length * 2 : 0), // HARDCODED calculation
-      suggestions: sq.gaps && sq.gaps.length > 0 ? sq.gaps[0] : 
-                  (sq.issues && sq.issues.length > 0 ? sq.issues[0] : "No issues found"), // HARDCODED logic
-    })) : []  // Fallback to empty array if loggingScores is undefined or null
+      score: sq.score ?? 0,
+      missingLogs: Math.max(0, 100 - (sq.score ?? 0)) / 5,
+      verboseLogs: Array.isArray(sq.gaps) ? sq.gaps.length * 2 : (Array.isArray(sq.issues) ? sq.issues.length * 2 : 0),
+      suggestions: Array.isArray(sq.gaps) && sq.gaps.length > 0
+        ? sq.gaps[0]
+        : (Array.isArray(sq.issues) && sq.issues.length > 0 ? sq.issues[0] : "No issues found"),
+    }))
   
     const getScoreColor = (score: number) => {
       if (score >= 80) return "success"

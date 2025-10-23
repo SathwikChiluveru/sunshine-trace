@@ -2,15 +2,41 @@
 // Enhanced AI analyzer for comprehensive code and log analysis
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 
-const API_BASE = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
-const MODEL    = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
-const API_KEY  = process.env.AI_API_KEY  || 'local';
+// Provider selection: prefer OpenRouter if key present, else internal vLLM
+/*const OR_ENABLED   = !!process.env.OPENROUTER_API_KEY;
+const OR_BASE      = process.env.OPENROUTER_API_BASE || 'https://openrouter.ai/api/v1';
+const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen2.5-vl-32b-instruct:free';
+const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
+const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';*/
+
+const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
+const DEVNET_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
+const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';
+
+const PROVIDER     = OR_ENABLED ? 'openrouter' : 'devnet';
+const API_BASE     = OR_ENABLED ? OR_BASE : DEVNET_BASE;
+const MODEL        = OR_ENABLED ? OR_MODEL : DEVNET_MODEL;
+const API_KEY      = OR_ENABLED ? process.env.OPENROUTER_API_KEY : DEVNET_KEY;
 
 async function chat(system, user) {
-  const res = await fetch(`${API_BASE}/chat/completions`, {
+  const url = `${API_BASE}/chat/completions`;
+  const headers = OR_ENABLED
+    ? {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+        'HTTP-Referer': OR_SITE_URL,
+        'X-Title': OR_SITE_NAME,
+      }
+    : {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+      };
+  console.log('[AI] chat ->', { provider: PROVIDER, url, model: MODEL });
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${API_KEY}` },
+    headers,
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.1,
@@ -23,7 +49,8 @@ async function chat(system, user) {
   });
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`LLM error ${res.status}: ${t}`);
+    console.error('[AI] chat error', { status: res.status, statusText: res.statusText, body: t.slice(0,500) });
+    throw new Error(`LLM error ${res.status}: ${res.statusText}`);
   }
   const j = await res.json();
   return j.choices?.[0]?.message?.content?.trim() || '';

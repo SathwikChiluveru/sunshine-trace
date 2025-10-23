@@ -17,6 +17,8 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([])
   const [pastedLogs, setPastedLogs] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000'
+  const MAX_PASTE_CHARS = 200_000 // ~200 KB to avoid OOM by pasting huge data like base64 zips
 
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles((prev) => [...prev, ...newFiles])
@@ -41,7 +43,7 @@ export default function Home() {
         
         // Perform AI analysis on pasted logs
         try {
-          const response = await fetch('http://localhost:5000/api/analyze/file', {
+          const response = await fetch(`${API_BASE}/api/analyze/file`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -92,7 +94,7 @@ export default function Home() {
 
           // Perform AI analysis on all files
           try {
-            const response = await fetch('http://localhost:5000/api/analyze/batch', {
+            const response = await fetch(`${API_BASE}/api/analyze/batch`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ files: validFiles })
@@ -112,7 +114,7 @@ export default function Home() {
           try {
             const buf = await zip.arrayBuffer()
             const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
-            const response = await fetch('http://localhost:5000/api/analyze/zip', {
+            const response = await fetch(`${API_BASE}/api/analyze/zip`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ zipBase64: base64 })
@@ -176,9 +178,23 @@ export default function Home() {
                 id="paste-logs"
                 placeholder="Paste your logs here... (e.g., from terminal output)\n\n2025-10-16 14:10:21 INFO  UserService - User login successful\n2025-10-16 14:12:47 ERROR EpisodeService - NullPointerException at EpisodeService.java:231"
                 value={pastedLogs}
-                onChange={(e) => setPastedLogs(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  // Detect likely base64 ZIP (starts with "UEsDB") or oversized input
+                  const looksLikeZipBase64 = v.startsWith("UEsDB")
+                  if (looksLikeZipBase64) {
+                    alert("Detected zipped content. Please upload the .zip file using the Upload area instead of pasting.")
+                    return
+                  }
+                  if (v.length > MAX_PASTE_CHARS) {
+                    alert("Pasted content is too large. Please upload as a file (supports .zip, .log, .txt).")
+                    return
+                  }
+                  setPastedLogs(v)
+                }}
                 className="min-h-[200px] font-mono text-sm resize-y"
               />
+              <p className="text-xs text-muted-foreground">For codebases, upload a <code>.zip</code> via the Upload area below. The paste box is for text logs only.</p>
               {pastedLogs.trim() && (
                 <p className="text-xs text-muted-foreground">
                   {pastedLogs.split("\n").filter((line) => line.trim()).length} log lines detected

@@ -1,0 +1,6 @@
+{
+  "name": "sunshine-ai-demo",
+  "version": "1.0.0",
+  "description": "Demo codebase for Sunshine Trace AI end-to-end testing",
+  "dependencies": { "express": "^4.19.2" }
+}
