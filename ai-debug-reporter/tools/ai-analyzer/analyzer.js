@@ -67,7 +67,14 @@ async function chat(system, user) {
   }
   
   const j = await res.json();
-  const response = j.choices?.[0]?.message?.content?.trim() || '';
+  let response = j.choices?.[0]?.message?.content?.trim() || '';
+  
+  // Clean up response - remove markdown code blocks if present
+  if (response.startsWith('```json')) {
+    response = response.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (response.startsWith('```')) {
+    response = response.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
   
   console.log('[AI] ===== RESPONSE RECEIVED =====');
   console.log('[AI] Response Length:', response.length, 'characters');
@@ -153,10 +160,22 @@ Evaluate code quality across multiple dimensions:
 - Testing coverage
 - Design patterns usage
 - Code organization and structure
+- LOGGING QUALITY: Assess logging practices including structured logging, error codes, correlation IDs, log levels, and observability
 
-Return JSON with: {quality_score, metrics: {complexity, maintainability, performance, documentation}, issues: [{type, severity, description, suggestion}], recommendations}`
+Return JSON with: {
+  quality_score, 
+  metrics: {
+    complexity, 
+    maintainability, 
+    performance, 
+    documentation,
+    logging: number (0-100, where 100 is excellent logging practices)
+  }, 
+  issues: [{type, severity, description, suggestion}], 
+  recommendations
+}`
   
-  const user = `Evaluate the quality of this ${fileType} code:\n${codeContent}`;
+  const user = `Evaluate the quality of this ${fileType} code, paying special attention to logging practices:\n${codeContent}`;
   return await chat(system, user);
 }
 

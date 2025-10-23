@@ -285,17 +285,58 @@ app.post('/api/analyze/zip', async (req, res) => {
       console.log('[ZIP] No log files found for AI analysis');
     }
 
-    // Fallback analyzers (non-AI) to provide dynamic data even if AI fails
-    function scoreModule(content){
-      const hasErrorCodes = /ERR_\w+|errorCode|code:\s*\w+/i.test(content) ? 1 : 0;
-      const hasCorrId    = /correlation|trace[_-]?id|x-request-id/i.test(content) ? 1 : 0;
-      const structured   = /{[^}]*"level"\s*:\s*"(info|error|warn|debug)"[^}]*}/i.test(content) ? 1 : 0;
-      return Math.round((hasErrorCodes + hasCorrId + structured) / 3 * 100);
+    // Enhanced logging quality analysis: prefer AI, fallback to deterministic
+    let loggingScores = [];
+    
+    // Try to extract logging quality from AI code quality analysis
+    console.log('[ZIP] ===== BUILDING LOGGING QUALITY SCORES =====');
+    const codeFiles = limited.filter(f => ['js','ts','tsx','py','java','go','rb','php','cs'].includes((f.fileType||'').toLowerCase()));
+    
+    for (const f of codeFiles) {
+      let score = 0;
+      let gaps = [];
+      
+      // Try to get logging quality from AI code quality analysis
+      const module = aiResults.modules.find(m => m.fileName === f.fileName);
+      if (module?.codeQuality && !module.codeQuality.error) {
+        try {
+          const qualityData = typeof module.codeQuality === 'string' ? JSON.parse(module.codeQuality) : module.codeQuality;
+          // Extract logging-related metrics from code quality
+          if (qualityData.metrics?.logging) {
+            score = qualityData.metrics.logging;
+          } else if (qualityData.issues) {
+            // Calculate score based on logging-related issues
+            const loggingIssues = qualityData.issues.filter(issue => 
+              issue.description?.toLowerCase().includes('log') ||
+              issue.type?.toLowerCase().includes('log')
+            );
+            score = Math.max(0, 100 - (loggingIssues.length * 20));
+            gaps = loggingIssues.map(issue => issue.description);
+          }
+          console.log(`[ZIP] AI logging quality for ${f.fileName}:`, score);
+        } catch (parseError) {
+          console.warn(`[ZIP] Failed to parse AI logging quality for ${f.fileName}:`, parseError.message);
+        }
+      }
+      
+      // Fallback to deterministic analysis if AI failed
+      if (score === 0) {
+        console.log(`[ZIP] Using deterministic logging quality for ${f.fileName}`);
+        const hasErrorCodes = /ERR_\w+|errorCode|code:\s*\w+/i.test(f.content) ? 1 : 0;
+        const hasCorrId    = /correlation|trace[_-]?id|x-request-id/i.test(f.content) ? 1 : 0;
+        const structured   = /{[^}]*"level"\s*:\s*"(info|error|warn|debug)"[^}]*}/i.test(f.content) ? 1 : 0;
+        score = Math.round((hasErrorCodes + hasCorrId + structured) / 3 * 100);
+        
+        // Generate gaps based on missing features
+        if (!hasErrorCodes) gaps.push('Missing error codes');
+        if (!hasCorrId) gaps.push('Missing correlation IDs');
+        if (!structured) gaps.push('Missing structured logging');
+      }
+      
+      loggingScores.push({ module: f.fileName, score, gaps });
     }
-
-    const loggingScores = limited
-      .filter(f => ['js','ts','tsx','py','java','go','rb','php','cs'].includes((f.fileType||'').toLowerCase()))
-      .map(f => ({ module: f.fileName, score: scoreModule(f.content), gaps: [] }));
+    
+    console.log('[ZIP] Final logging quality scores:', loggingScores);
 
     // PII findings: prefer AI analysis, fallback to regex
     let piiFindings = [];
@@ -514,7 +555,32 @@ app.post('/api/analyze/zip', async (req, res) => {
       ]
     };
 
-    res.json({ aiResults, riskHeatmap, loggingScores, piiFindings, errorFlows, summary });
+    // Include log statistics as separate fields for easy frontend access
+    const logStatistics = {
+      totalLogs,
+      errorCount: errCount,
+      warningCount: warnCount,
+      fatalCount,
+      infoCount
+    };
+    
+    console.log('[ZIP] Final response data:', {
+      riskHeatmap: riskHeatmap.length,
+      loggingScores: loggingScores.length,
+      piiFindings: piiFindings.length,
+      errorFlows: errorFlows.length,
+      logStatistics
+    });
+    
+    res.json({ 
+      aiResults, 
+      riskHeatmap, 
+      loggingScores, 
+      piiFindings, 
+      errorFlows, 
+      summary,
+      logStatistics  // Add log statistics as separate field
+    });
   } catch (error) {
     console.error('Zip analysis error:', error);
     res.status(500).json({ error: error.message });

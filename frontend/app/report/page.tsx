@@ -170,6 +170,38 @@ export default function DebugReport() {
           errorFlows: parsed.errorFlows?.length || 0,
           summary: parsed.summary ? 'present' : 'missing'
         });
+        
+        // Extract log statistics from AI zip results if available
+        if (parsed.logStatistics) {
+          console.log("[Report] Found log statistics in AI zip results:", parsed.logStatistics);
+          // Store log statistics in the summary object for compatibility
+          if (parsed.summary && typeof parsed.summary === 'object') {
+            parsed.summary.logStatistics = parsed.logStatistics;
+          }
+        } else if (parsed.summary && typeof parsed.summary === 'object') {
+          const summary = parsed.summary;
+          if (summary.executive_summary) {
+            // Fallback: Extract log statistics from executive summary text
+            const summaryText = summary.executive_summary;
+            const totalLogsMatch = summaryText.match(/(\d+)\s+log\s+entries?/i);
+            const errorMatch = summaryText.match(/(\d+)\s+errors?/i);
+            const warningMatch = summaryText.match(/(\d+)\s+warnings?/i);
+            const fatalMatch = summaryText.match(/(\d+)\s+fatals?/i);
+            
+            if (totalLogsMatch || errorMatch || warningMatch || fatalMatch) {
+              const logStats = {
+                totalLogs: totalLogsMatch ? parseInt(totalLogsMatch[1]) : 0,
+                errorCount: errorMatch ? parseInt(errorMatch[1]) : 0,
+                warningCount: warningMatch ? parseInt(warningMatch[1]) : 0,
+                fatalCount: fatalMatch ? parseInt(fatalMatch[1]) : 0
+              };
+              console.log("[Report] Extracted log statistics from AI zip summary text:", logStats);
+              // Store log statistics in the summary object
+              parsed.summary.logStatistics = logStats;
+            }
+          }
+        }
+        
         setAiZipResults(parsed)
       } catch (error) {
         console.error("Error parsing AI zip results:", error)
@@ -281,7 +313,8 @@ export default function DebugReport() {
                 <SummarySection
                   data={logData}
                   executiveSummary={summaryData.executive_summary}
-                  riskHeatmapData={riskHeatmapData} 
+                  riskHeatmapData={riskHeatmapData}
+                  summaryData={summaryData}
                 />
               )}
             </section>

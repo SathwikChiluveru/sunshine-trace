@@ -8,21 +8,47 @@ import type { ParsedLogData } from "@/lib/types";
 interface SummarySectionProps {
   data: ParsedLogData | null;
   executiveSummary: string | null;  
-  riskHeatmapData: Array<{ name: string; score: number }>; 
+  riskHeatmapData: Array<{ name: string; score: number }>;
+  summaryData?: any; // Add summaryData to access logStatistics
 }
 
 export function SummarySection({
   data,
   executiveSummary,
   riskHeatmapData,
+  summaryData,
 }: SummarySectionProps) {
   const [isHeatmapVisible, setIsHeatmapVisible] = useState(true)
-  const issueStats = data
+  // Get log statistics from either parsed data or summary data
+  const getLogStats = () => {
+    if (data?.summary) {
+      // From pasted logs
+      return {
+        totalLogs: data.summary.totalLogs || 0,
+        errorCount: data.summary.errorCount || 0,
+        warningCount: data.summary.warningCount || 0,
+        sensitiveDataCount: data.sensitiveData?.length || 0
+      };
+    } else if (summaryData?.logStatistics) {
+      // From AI zip results
+      return {
+        totalLogs: summaryData.logStatistics.totalLogs || 0,
+        errorCount: summaryData.logStatistics.errorCount || 0,
+        warningCount: summaryData.logStatistics.warningCount || 0,
+        sensitiveDataCount: 0 // Will be calculated separately
+      };
+    }
+    return null;
+  };
+
+  const logStats = getLogStats();
+  
+  const issueStats = logStats
     ? [
-        { label: "Total Logs", count: data.summary.totalLogs, color: "info" },
-        { label: "Errors", count: data.summary.errorCount, color: "error" },
-        { label: "Warnings", count: data.summary.warningCount, color: "warning" },
-        { label: "Sensitive Data", count: data.sensitiveData.length, color: "error" },
+        { label: "Total Logs", count: logStats.totalLogs, color: "info" },
+        { label: "Errors", count: logStats.errorCount, color: "error" },
+        { label: "Warnings", count: logStats.warningCount, color: "warning" },
+        { label: "Sensitive Data", count: logStats.sensitiveDataCount, color: "error" },
       ]
     : [
         { label: "Missing Logs", count: 47, color: "warning" },
