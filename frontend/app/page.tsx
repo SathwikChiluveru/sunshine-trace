@@ -121,6 +121,13 @@ export default function Home() {
             })
             if (response.ok) {
               const zipResults = await response.json()
+              console.log("[Page] Storing AI zip results:", {
+                riskHeatmap: zipResults.riskHeatmap?.length || 0,
+                loggingScores: zipResults.loggingScores?.length || 0,
+                piiFindings: zipResults.piiFindings?.length || 0,
+                errorFlows: zipResults.errorFlows?.length || 0,
+                summary: zipResults.summary ? 'present' : 'missing'
+              });
               localStorage.setItem('aiZipResults', JSON.stringify(zipResults))
             }
           } catch (e) {

@@ -241,12 +241,22 @@ app.post('/api/analyze/zip', async (req, res) => {
       try {
         console.log(`[ZIP] Running vulnerability analysis for ${f.fileName}`);
         mod.vulnerabilities = await performAnalysis({ content: f.content, fileType: f.fileType, fileName: f.fileName }, 'vulnerabilities');
+        console.log(`[ZIP] Vulnerability analysis result for ${f.fileName}:`, {
+          type: typeof mod.vulnerabilities,
+          hasError: !!mod.vulnerabilities?.error,
+          preview: typeof mod.vulnerabilities === 'string' ? mod.vulnerabilities.substring(0, 200) : JSON.stringify(mod.vulnerabilities).substring(0, 200)
+        });
       } catch (error) {
         console.error(`[ZIP] Vulnerability analysis failed for ${f.fileName}:`, error.message);
       }
       try {
         console.log(`[ZIP] Running code quality analysis for ${f.fileName}`);
         mod.codeQuality = await performAnalysis({ content: f.content, fileType: f.fileType, fileName: f.fileName }, 'code_quality');
+        console.log(`[ZIP] Code quality analysis result for ${f.fileName}:`, {
+          type: typeof mod.codeQuality,
+          hasError: !!mod.codeQuality?.error,
+          preview: typeof mod.codeQuality === 'string' ? mod.codeQuality.substring(0, 200) : JSON.stringify(mod.codeQuality).substring(0, 200)
+        });
       } catch (error) {
         console.error(`[ZIP] Code quality analysis failed for ${f.fileName}:`, error.message);
       }
@@ -383,12 +393,55 @@ app.post('/api/analyze/zip', async (req, res) => {
     }
 
     // Risk heatmap: prefer AI risk_score; otherwise derive from loggingScores
-    let riskHeatmap = (aiResults.modules || []).map(m => ({
-      module: m.fileName,
-      risk: Math.min(100, Math.max(0, Math.round((m?.vulnerabilities?.risk_score || 0))))
-    }));
-    if (riskHeatmap.length === 0) {
+    console.log('[ZIP] ===== BUILDING RISK HEATMAP =====');
+    console.log('[ZIP] AI modules available:', aiResults.modules?.length || 0);
+    console.log('[ZIP] AI modules data:', aiResults.modules?.map(m => ({
+      fileName: m.fileName,
+      hasVulnerabilities: !!m.vulnerabilities,
+      vulnerabilitiesData: m.vulnerabilities,
+      hasCodeQuality: !!m.codeQuality,
+      codeQualityData: m.codeQuality
+    })));
+    
+    let riskHeatmap = (aiResults.modules || []).map(m => {
+      let riskScore = 0;
+      
+      // Try to extract risk score from AI vulnerability analysis
+      if (m.vulnerabilities && !m.vulnerabilities.error) {
+        try {
+          const vulnData = typeof m.vulnerabilities === 'string' ? JSON.parse(m.vulnerabilities) : m.vulnerabilities;
+          riskScore = vulnData.risk_score || vulnData.riskScore || 0;
+          console.log(`[ZIP] Extracted risk score for ${m.fileName}:`, riskScore);
+        } catch (parseError) {
+          console.warn(`[ZIP] Failed to parse vulnerability data for ${m.fileName}:`, parseError.message);
+        }
+      }
+      
+      // Try to extract risk score from AI code quality analysis
+      if (riskScore === 0 && m.codeQuality && !m.codeQuality.error) {
+        try {
+          const qualityData = typeof m.codeQuality === 'string' ? JSON.parse(m.codeQuality) : m.codeQuality;
+          // Convert quality score to risk (inverse relationship)
+          const qualityScore = qualityData.quality_score || qualityData.qualityScore || 0;
+          riskScore = Math.max(0, 100 - qualityScore);
+          console.log(`[ZIP] Extracted risk from quality score for ${m.fileName}:`, riskScore);
+        } catch (parseError) {
+          console.warn(`[ZIP] Failed to parse code quality data for ${m.fileName}:`, parseError.message);
+        }
+      }
+      
+      return {
+        module: m.fileName,
+        risk: Math.min(100, Math.max(0, Math.round(riskScore)))
+      };
+    });
+    
+    console.log('[ZIP] AI-based risk heatmap:', riskHeatmap);
+    
+    if (riskHeatmap.length === 0 || riskHeatmap.every(m => m.risk === 0)) {
+      console.log('[ZIP] Using logging quality fallback for risk heatmap');
       riskHeatmap = loggingScores.map(m => ({ module: m.module, risk: Math.max(0, 100 - m.score) }));
+      console.log('[ZIP] Fallback risk heatmap:', riskHeatmap);
     }
 
     // Enhanced summary with meaningful insights - prefer AI analysis

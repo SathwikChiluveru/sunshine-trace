@@ -163,6 +163,13 @@ export default function DebugReport() {
     if (zipData) {
       try {
         const parsed = JSON.parse(zipData)
+        console.log("[Report] Loaded AI zip results from localStorage:", {
+          riskHeatmap: parsed.riskHeatmap?.length || 0,
+          loggingScores: parsed.loggingScores?.length || 0,
+          piiFindings: parsed.piiFindings?.length || 0,
+          errorFlows: parsed.errorFlows?.length || 0,
+          summary: parsed.summary ? 'present' : 'missing'
+        });
         setAiZipResults(parsed)
       } catch (error) {
         console.error("Error parsing AI zip results:", error)
@@ -208,7 +215,19 @@ export default function DebugReport() {
   useEffect(() => {
     // Prefer dynamic riskHeatmap from AI zip results if available
     if (aiZipResults?.riskHeatmap) {
-      const data = { loggingScores: [], ...aiZipResults, riskHeatmap: aiZipResults.riskHeatmap }
+      console.log("[Report] Processing AI zip results:", {
+        riskHeatmap: aiZipResults.riskHeatmap?.length || 0,
+        loggingScores: aiZipResults.loggingScores?.length || 0,
+        piiFindings: aiZipResults.piiFindings?.length || 0,
+        errorFlows: aiZipResults.errorFlows?.length || 0
+      });
+      
+      const data = { 
+        loggingScores: aiZipResults.loggingScores || [], 
+        piiFindings: aiZipResults.piiFindings || [],
+        errorFlows: aiZipResults.errorFlows || [],
+        riskHeatmap: aiZipResults.riskHeatmap 
+      }
       setFindingsData(data)
       const heatmapData = aiZipResults.riskHeatmap.map((module: any) => ({
         name: module.module.split("\\").pop() || module.module, // Extract module name
