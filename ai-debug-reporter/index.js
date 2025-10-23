@@ -195,6 +195,14 @@ app.post('/api/analyze/zip', async (req, res) => {
       }
     }
     walk(tmpDir);
+    
+    console.log('[ZIP] ===== FILE EXTRACTION COMPLETE =====');
+    console.log('[ZIP] Total files found:', files.length);
+    console.log('[ZIP] Files by type:', files.reduce((acc, f) => {
+      acc[f.fileType] = (acc[f.fileType] || 0) + 1;
+      return acc;
+    }, {}));
+    console.log('[ZIP] File list:', files.map(f => `${f.fileName} (${f.fileType}, ${f.content.length} chars)`));
 
     // Limit total size (e.g., 1 MB) to keep prompts reasonable
     let total = 0;
@@ -205,24 +213,66 @@ app.post('/api/analyze/zip', async (req, res) => {
       limited.push(f);
       total += size;
     }
+    
+    console.log('[ZIP] ===== FILE SIZE LIMITING =====');
+    console.log('[ZIP] Total size limit: 1MB');
+    console.log('[ZIP] Files selected for analysis:', limited.length);
+    console.log('[ZIP] Total size used:', total, 'bytes');
+    console.log('[ZIP] Files excluded due to size limit:', files.length - limited.length);
+    console.log('[ZIP] Selected files:', limited.map(f => `${f.fileName} (${f.fileType}, ${f.content.length} chars)`));
 
     const { performAnalysis } = require('./tools/ai-analyzer/analyzer');
 
     // Aggregate AI results
+    console.log('[ZIP] ===== STARTING AI ANALYSIS =====');
+    console.log('[ZIP] Codebase analysis input:', limited.map(({fileName,fileType})=>({fileName,fileType})));
+    
     const aiResults = {
       codebase: await performAnalysis({ files: limited.map(({fileName,fileType})=>({fileName,fileType})) }, 'codebase'),
-      modules: []
+      modules: [],
+      logAnalysis: null
     };
 
+    // AI analysis for code files
+    console.log('[ZIP] ===== ANALYZING INDIVIDUAL FILES =====');
     for (const f of limited) {
+      console.log(`[ZIP] Analyzing file: ${f.fileName} (${f.fileType})`);
       const mod = { fileName: f.fileName };
       try {
-        mod.vulnerabilities = await performAnalysis({ content: f.content, fileType: f.fileType }, 'vulnerabilities');
-      } catch {}
+        console.log(`[ZIP] Running vulnerability analysis for ${f.fileName}`);
+        mod.vulnerabilities = await performAnalysis({ content: f.content, fileType: f.fileType, fileName: f.fileName }, 'vulnerabilities');
+      } catch (error) {
+        console.error(`[ZIP] Vulnerability analysis failed for ${f.fileName}:`, error.message);
+      }
       try {
-        mod.codeQuality = await performAnalysis({ content: f.content, fileType: f.fileType }, 'code_quality');
-      } catch {}
+        console.log(`[ZIP] Running code quality analysis for ${f.fileName}`);
+        mod.codeQuality = await performAnalysis({ content: f.content, fileType: f.fileType, fileName: f.fileName }, 'code_quality');
+      } catch (error) {
+        console.error(`[ZIP] Code quality analysis failed for ${f.fileName}:`, error.message);
+      }
       aiResults.modules.push(mod);
+    }
+
+    // AI analysis for log files
+    const logFiles = limited.filter(f => f.fileName.toLowerCase().endsWith('.log'));
+    console.log('[ZIP] ===== ANALYZING LOG FILES =====');
+    console.log('[ZIP] Log files found:', logFiles.length);
+    console.log('[ZIP] Log file names:', logFiles.map(f => f.fileName));
+    
+    if (logFiles.length > 0) {
+      try {
+        const combinedLogContent = logFiles.map(f => f.content).join('\n');
+        console.log('[ZIP] Combined log content length:', combinedLogContent.length, 'characters');
+        console.log('[ZIP] Combined log content preview:', combinedLogContent.substring(0, 500) + '...');
+        
+        aiResults.logAnalysis = await performAnalysis(combinedLogContent, 'sensitive_data');
+        console.log('[ZIP] Log analysis completed:', aiResults.logAnalysis ? 'success' : 'failed');
+      } catch (error) {
+        console.error('[ZIP] Log analysis failed:', error.message);
+        aiResults.logAnalysis = { error: error.message };
+      }
+    } else {
+      console.log('[ZIP] No log files found for AI analysis');
     }
 
     // Fallback analyzers (non-AI) to provide dynamic data even if AI fails
@@ -237,50 +287,97 @@ app.post('/api/analyze/zip', async (req, res) => {
       .filter(f => ['js','ts','tsx','py','java','go','rb','php','cs'].includes((f.fileType||'').toLowerCase()))
       .map(f => ({ module: f.fileName, score: scoreModule(f.content), gaps: [] }));
 
-    // PII findings from any file + line numbers for .log files
-    const piiFindings = [];
-    const nricRegex = /\b[STFG]\d{7}[A-Z]\b/g;
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    const phoneRegex = /(\+65|65)?[689]\d{7}/g;
-    for (const f of limited) {
-      if (f.fileName.toLowerCase().endsWith('.log')) {
-        const lines = f.content.split(/\r?\n/);
-        lines.forEach((line, idx) => {
-          for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex], ['PHONE', phoneRegex]]){
-            const m = line.match(rx);
-            if (m){
-              m.forEach(v => piiFindings.push({ type, file: f.fileName, line: idx+1, sample: v, action: type==='NRIC'?'mask last 4 chars':'mask/hash' }))
+    // PII findings: prefer AI analysis, fallback to regex
+    let piiFindings = [];
+    
+    // Try AI analysis first
+    if (aiResults.logAnalysis && !aiResults.logAnalysis.error) {
+      try {
+        const aiPii = JSON.parse(aiResults.logAnalysis);
+        if (aiPii.detections && Array.isArray(aiPii.detections)) {
+          piiFindings = aiPii.detections.map(detection => ({
+            type: detection.type || 'UNKNOWN',
+            file: 'logs',
+            line: 0,
+            sample: detection.value || 'detected',
+            action: detection.suggestion || 'mask/hash',
+            confidence: detection.confidence || 0.8
+          }));
+          console.log('[AI] Using AI PII analysis:', piiFindings.length, 'detections');
+        }
+      } catch (parseError) {
+        console.warn('[AI] Failed to parse AI PII results, using fallback:', parseError.message);
+      }
+    }
+    
+    // Fallback to regex if AI failed or no results
+    if (piiFindings.length === 0) {
+      console.log('[AI] Using regex fallback for PII detection');
+      const nricRegex = /\b[STFG]\d{7}[A-Z]\b/g;
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+      const phoneRegex = /(\+65|65)?[689]\d{7}/g;
+      
+      for (const f of limited) {
+        if (f.fileName.toLowerCase().endsWith('.log')) {
+          const lines = f.content.split(/\r?\n/);
+          lines.forEach((line, idx) => {
+            for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex], ['PHONE', phoneRegex]]){
+              const m = line.match(rx);
+              if (m){
+                m.forEach(v => piiFindings.push({ type, file: f.fileName, line: idx+1, sample: v, action: type==='NRIC'?'mask last 4 chars':'mask/hash' }))
+              }
             }
+          })
+        } else {
+          // Scan non-log text without line numbers
+          for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex]]){
+            if (rx.test(f.content)) piiFindings.push({ type, file: f.fileName, line: 0, sample: 'detected', action: type==='NRIC'?'mask last 4 chars':'mask/hash' })
           }
-        })
-      } else {
-        // Scan non-log text without line numbers
-        for (const [type, rx] of [['NRIC', nricRegex], ['EMAIL', emailRegex]]){
-          if (rx.test(f.content)) piiFindings.push({ type, file: f.fileName, line: 0, sample: 'detected', action: type==='NRIC'?'mask last 4 chars':'mask/hash' })
         }
       }
     }
 
-    // Error flows from .log files: simple WARN -> ERROR/FATAL clustering within window
-    const errorFlows = [];
-    const logFiles = limited.filter(f => f.fileName.toLowerCase().endsWith('.log'));
-    for (const f of logFiles) {
-      const lines = f.content.split(/\r?\n/).filter(Boolean);
-      for (let i=0;i<lines.length;i++){
-        const line = lines[i];
-        if (/\bWARN\b/i.test(line)){
-          const path = [line.replace(/^\s+/,'')];
-          let stackTop = '';
-          for (let j=i+1;j<Math.min(i+6, lines.length); j++){
-            const ln = lines[j];
-            if (/\b(ERROR|FATAL)\b/i.test(ln)){
-              path.push(ln.replace(/^\s+/,''));
-              if (!stackTop) stackTop = ln;
-            } else if (/\bINFO\b/i.test(ln)){
-              break;
+    // Error flows: prefer AI analysis, fallback to pattern matching
+    let errorFlows = [];
+    
+    // Try AI analysis for error flows
+    if (aiResults.logAnalysis && !aiResults.logAnalysis.error) {
+      try {
+        const aiLogAnalysis = JSON.parse(aiResults.logAnalysis);
+        if (aiLogAnalysis.error_flows && Array.isArray(aiLogAnalysis.error_flows)) {
+          errorFlows = aiLogAnalysis.error_flows.map(flow => ({
+            path: flow.path || [flow.trigger, flow.cascade].filter(Boolean),
+            stackTop: flow.stackTop || flow.trigger || 'Unknown error'
+          }));
+          console.log('[AI] Using AI error flow analysis:', errorFlows.length, 'flows');
+        }
+      } catch (parseError) {
+        console.warn('[AI] Failed to parse AI error flow results, using fallback:', parseError.message);
+      }
+    }
+    
+    // Fallback to pattern matching if AI failed or no results
+    if (errorFlows.length === 0) {
+      console.log('[AI] Using pattern matching fallback for error flows');
+      const logFiles = limited.filter(f => f.fileName.toLowerCase().endsWith('.log'));
+      for (const f of logFiles) {
+        const lines = f.content.split(/\r?\n/).filter(Boolean);
+        for (let i=0;i<lines.length;i++){
+          const line = lines[i];
+          if (/\bWARN\b/i.test(line)){
+            const path = [line.replace(/^\s+/,'')];
+            let stackTop = '';
+            for (let j=i+1;j<Math.min(i+6, lines.length); j++){
+              const ln = lines[j];
+              if (/\b(ERROR|FATAL)\b/i.test(ln)){
+                path.push(ln.replace(/^\s+/,''));
+                if (!stackTop) stackTop = ln;
+              } else if (/\bINFO\b/i.test(ln)){
+                break;
+              }
             }
+            if (path.length>1) errorFlows.push({ path, stackTop: stackTop || path[path.length-1] });
           }
-          if (path.length>1) errorFlows.push({ path, stackTop: stackTop || path[path.length-1] });
         }
       }
     }
@@ -294,15 +391,38 @@ app.post('/api/analyze/zip', async (req, res) => {
       riskHeatmap = loggingScores.map(m => ({ module: m.module, risk: Math.max(0, 100 - m.score) }));
     }
 
-    // Enhanced summary with meaningful insights
-    const anyLog = logFiles[0]?.content || '';
-    const errCount = (anyLog.match(/\bERROR\b/g) || []).length;
-    const warnCount = (anyLog.match(/\bWARN\b/g) || []).length;
-    const fatalCount = (anyLog.match(/\bFATAL\b/g) || []).length;
-    const infoCount = (anyLog.match(/\bINFO\b/g) || []).length;
+    // Enhanced summary with meaningful insights - prefer AI analysis
+    let errCount = 0, warnCount = 0, fatalCount = 0, infoCount = 0, totalLogs = 0;
+    
+    // Try AI log analysis first
+    if (aiResults.logAnalysis && !aiResults.logAnalysis.error) {
+      try {
+        const aiLogAnalysis = JSON.parse(aiResults.logAnalysis);
+        if (aiLogAnalysis.error_analysis) {
+          errCount = aiLogAnalysis.error_analysis.error_count || 0;
+          warnCount = aiLogAnalysis.error_analysis.warning_count || 0;
+          fatalCount = aiLogAnalysis.error_analysis.fatal_count || 0;
+          infoCount = aiLogAnalysis.error_analysis.info_count || 0;
+          totalLogs = aiLogAnalysis.error_analysis.total_logs || 0;
+          console.log('[AI] Using AI log analysis for summary:', { errCount, warnCount, fatalCount, infoCount, totalLogs });
+        }
+      } catch (parseError) {
+        console.warn('[AI] Failed to parse AI log analysis, using fallback:', parseError.message);
+      }
+    }
+    
+    // Fallback to regex counting if AI failed
+    if (totalLogs === 0) {
+      console.log('[AI] Using regex fallback for log counting');
+      const anyLog = logFiles[0]?.content || '';
+      errCount = (anyLog.match(/\bERROR\b/g) || []).length;
+      warnCount = (anyLog.match(/\bWARN\b/g) || []).length;
+      fatalCount = (anyLog.match(/\bFATAL\b/g) || []).length;
+      infoCount = (anyLog.match(/\bINFO\b/g) || []).length;
+      totalLogs = errCount + warnCount + fatalCount + infoCount;
+    }
     
     // Calculate system health indicators
-    const totalLogs = errCount + warnCount + fatalCount + infoCount;
     const errorRate = totalLogs > 0 ? (errCount + fatalCount) / totalLogs : 0;
     const criticalIssues = fatalCount > 0;
     const highErrorRate = errorRate > 0.1; // 10% error rate threshold

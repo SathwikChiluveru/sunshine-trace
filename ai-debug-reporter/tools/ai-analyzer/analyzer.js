@@ -33,7 +33,16 @@ async function chat(system, user) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${API_KEY}`,
       };
-  console.log('[AI] chat ->', { provider: PROVIDER, url, model: MODEL });
+  
+  console.log('[AI] ===== REQUEST START =====');
+  console.log('[AI] Provider:', PROVIDER);
+  console.log('[AI] URL:', url);
+  console.log('[AI] Model:', MODEL);
+  console.log('[AI] System Prompt Length:', system.length, 'characters');
+  console.log('[AI] User Input Length:', user.length, 'characters');
+  console.log('[AI] System Prompt Preview:', system.substring(0, 200) + '...');
+  console.log('[AI] User Input Preview:', user.substring(0, 300) + '...');
+  
   const res = await fetch(url, {
     method: 'POST',
     headers,
@@ -47,29 +56,67 @@ async function chat(system, user) {
       ]
     })
   });
+  
   if (!res.ok) {
     const t = await res.text();
-    console.error('[AI] chat error', { status: res.status, statusText: res.statusText, body: t.slice(0,500) });
+    console.error('[AI] ===== REQUEST FAILED =====');
+    console.error('[AI] Status:', res.status);
+    console.error('[AI] Status Text:', res.statusText);
+    console.error('[AI] Error Body:', t.slice(0, 500));
     throw new Error(`LLM error ${res.status}: ${res.statusText}`);
   }
+  
   const j = await res.json();
-  return j.choices?.[0]?.message?.content?.trim() || '';
+  const response = j.choices?.[0]?.message?.content?.trim() || '';
+  
+  console.log('[AI] ===== RESPONSE RECEIVED =====');
+  console.log('[AI] Response Length:', response.length, 'characters');
+  console.log('[AI] Response Preview:', response.substring(0, 500) + '...');
+  console.log('[AI] Full Response:', response);
+  console.log('[AI] ===== REQUEST END =====');
+  
+  return response;
 }
 
-// 1. AI-Powered Sensitive Data Detection
+// 1. AI-Powered Log Analysis (Sensitive Data + Error Patterns)
 async function analyzeSensitiveData(logContent) {
-  const system = `You are a security expert specializing in data privacy and PII detection.
-Analyze log content for sensitive information including:
+  const system = `You are a security expert and log analyst specializing in data privacy and system monitoring.
+Analyze log content for:
+
+1. SENSITIVE DATA DETECTION:
 - Personal Identifiable Information (PII): names, emails, phone numbers, addresses
 - Financial data: credit cards, bank accounts, transaction IDs
 - Authentication data: passwords, tokens, API keys, session IDs
 - Medical data: patient IDs, medical records, health information
 - Business data: internal IDs, proprietary information
 
+2. ERROR PATTERN ANALYSIS:
+- Count total log entries, errors, warnings, fatal errors
+- Identify error flow patterns (WARN -> ERROR -> FATAL sequences)
+- Detect error cascades and system failures
+- Analyze error correlation and timing
+
+3. SYSTEM HEALTH ASSESSMENT:
+- Calculate error rates and system stability
+- Identify critical issues and failure points
+- Assess logging quality and completeness
+
 Consider context - distinguish between real data and placeholders/test data.
-Return JSON with: {detections: [{type, value, confidence, context, suggestion}], summary}`
+Return JSON with: {
+  detections: [{type, value, confidence, context, suggestion}],
+  error_analysis: {
+    total_logs: number,
+    error_count: number,
+    warning_count: number,
+    fatal_count: number,
+    info_count: number,
+    error_rate: number
+  },
+  error_flows: [{trigger, cascade, stackTop, severity}],
+  summary: "Overall system health and security assessment"
+}`
   
-  const user = `Analyze this log content for sensitive data:\n${logContent}`;
+  const user = `Analyze this log content comprehensively:\n${logContent}`;
   return await chat(system, user);
 }
 
@@ -170,25 +217,51 @@ Return JSON with: {architecture_score, security_score, quality_score, technical_
 
 // Main analysis function
 async function performAnalysis(inputData, analysisType) {
+  console.log(`[AI] ===== PERFORMING ${analysisType.toUpperCase()} ANALYSIS =====`);
+  
   try {
     switch (analysisType) {
       case 'sensitive_data':
+        console.log('[AI] Input data type:', typeof inputData);
+        console.log('[AI] Input data length:', inputData.length, 'characters');
+        console.log('[AI] Input data preview:', inputData.substring(0, 500) + '...');
         return await analyzeSensitiveData(inputData);
+        
       case 'vulnerabilities':
+        console.log('[AI] Analyzing file:', inputData.fileName || 'unknown');
+        console.log('[AI] File type:', inputData.fileType || 'unknown');
+        console.log('[AI] Content length:', inputData.content.length, 'characters');
+        console.log('[AI] Content preview:', inputData.content.substring(0, 300) + '...');
         return await analyzeVulnerabilities(inputData.content, inputData.fileType);
+        
       case 'code_quality':
+        console.log('[AI] Analyzing file:', inputData.fileName || 'unknown');
+        console.log('[AI] File type:', inputData.fileType || 'unknown');
+        console.log('[AI] Content length:', inputData.content.length, 'characters');
+        console.log('[AI] Content preview:', inputData.content.substring(0, 300) + '...');
         return await analyzeCodeQuality(inputData.content, inputData.fileType);
+        
       case 'risk_assessment':
+        console.log('[AI] Risk assessment input:', JSON.stringify(inputData, null, 2));
         return await analyzeRisk(inputData);
+        
       case 'error_flow':
+        console.log('[AI] Error flow input:', JSON.stringify(inputData, null, 2));
         return await analyzeErrorFlow(inputData);
+        
       case 'codebase':
+        console.log('[AI] Codebase analysis - Number of files:', inputData.files?.length || 0);
+        console.log('[AI] Files being analyzed:', inputData.files?.map(f => f.fileName).join(', ') || 'none');
+        console.log('[AI] Codebase data preview:', JSON.stringify(inputData, null, 2).substring(0, 1000) + '...');
         return await analyzeCodebase(inputData);
+        
       default:
         throw new Error(`Unknown analysis type: ${analysisType}`);
     }
   } catch (error) {
-    console.error(`Error in ${analysisType} analysis:`, error.message);
+    console.error(`[AI] ===== ${analysisType.toUpperCase()} ANALYSIS FAILED =====`);
+    console.error(`[AI] Error:`, error.message);
+    console.error(`[AI] Stack:`, error.stack);
     return { error: error.message };
   }
 }
