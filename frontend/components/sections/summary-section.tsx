@@ -15,7 +15,8 @@ interface SummarySectionProps {
 export function SummarySection({
   data,
   executiveSummary,
-  riskHeatmapD  summaryData,
+  riskHeatmapData,
+  summaryData,
 }: SummarySectionProps) {
   const [isHeatmapVisible, setIsHeatmapVisible] = useState(true)
   // Get log statistics from either parsed data or summary data

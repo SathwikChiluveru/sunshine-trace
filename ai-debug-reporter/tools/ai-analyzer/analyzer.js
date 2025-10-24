@@ -11,9 +11,9 @@ const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen2.5-vl-32b-in
 const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
 const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';
 
-const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
+/*const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
 const DEVNET_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
-const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';
+const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';*/
 
 const PROVIDER     = OR_ENABLED ? 'openrouter' : 'devnet';
 const API_BASE     = OR_ENABLED ? OR_BASE : DEVNET_BASE;
