@@ -24,12 +24,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "adm-zip": "^0.5.10",
     "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "ejs": "^3.1.9",
     "express": "^5.1.0",
     "glob": "^7.2.3",
-    "minimist": "^1.2.8",
-    "adm-zip": "^0.5.10",
-    "dotenv": "^16.4.5"
+    "minimist": "^1.2.8"
   }
 }
