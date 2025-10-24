@@ -10,18 +10,46 @@ import { parseLogFile } from "@/lib/log-parser"
 import type { ParsedLogData } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 import { SunshineLogo } from "@/components/sunshine-logo"
-import { AIAnalyzer } from "@/lib/ai-analyzer"
+import { extractZipFile, type ExtractedFile } from "@/lib/zip-utils"
+import { ZipFileExplorer } from "@/components/zip-file-explorer"
+import { Upload, BarChart3, AlertTriangle, Shield, RefreshCw, Lightbulb } from "lucide-react"
+
+type FeatureType = "logging-quality" | "error-flow" | "sensitive-data" | "recommendations"
 
 export default function Home() {
   const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [pastedLogs, setPastedLogs] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000'
-  const MAX_PASTE_CHARS = 200_000 // ~200 KB to avoid OOM by pasting huge data like base64 zips
 
-  const handleFilesAdded = (newFiles: File[]) => {
-    setFiles((prev) => [...prev, ...newFiles])
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"
+  const MAX_PASTE_CHARS = 200_000
+
+  const [comparisonMode, setComparisonMode] = useState(false)
+  const [comparisonFiles, setComparisonFiles] = useState<File[]>([])
+  const [comparisonPastedLogs, setComparisonPastedLogs] = useState("")
+  const [comparisonExtractedFiles, setComparisonExtractedFiles] = useState<ExtractedFile[]>([])
+  const [showComparisonZipExplorer, setShowComparisonZipExplorer] = useState(false)
+  const [selectedAnalysisTypes, setSelectedAnalysisTypes] = useState<string[]>([])
+
+  // ZIP handling state
+  const [extractedFiles, setExtractedFiles] = useState<ExtractedFile[]>([])
+  const [showZipExplorer, setShowZipExplorer] = useState(false)
+
+  const handleFilesAdded = async (newFiles: File[]) => {
+    const zipFiles = newFiles.filter((f) => f.name.endsWith(".zip"))
+    const regularFiles = newFiles.filter((f) => !f.name.endsWith(".zip"))
+
+    setFiles((prev) => [...prev, ...regularFiles])
+
+    // Extract ZIPs and show explorer
+    if (zipFiles.length > 0) {
+      for (const zipFile of zipFiles) {
+        const extracted = await extractZipFile(zipFile)
+        setExtractedFiles((prev) => [...prev, ...extracted])
+        setShowZipExplorer(true)
+      }
+    }
   }
 
   const handleRemoveFile = (index: number) => {
@@ -29,7 +57,7 @@ export default function Home() {
   }
 
   const handleAnalyze = async () => {
-    if (files.length === 0 && !pastedLogs.trim()) return
+    if (files.length === 0 && !pastedLogs.trim() && extractedFiles.filter((f) => f.selected).length === 0) return
 
     setIsAnalyzing(true)
 
@@ -37,42 +65,73 @@ export default function Home() {
     let aiAnalysisResults: any = null
 
     try {
+      // 🧠 Case 1: pasted logs
       if (pastedLogs.trim()) {
-        // Parse basic log data
         parsedData = parseLogFile(pastedLogs)
-        
-        // Perform AI analysis on pasted logs
+
         try {
           const response = await fetch(`${API_BASE}/api/analyze/file`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               content: pastedLogs,
-              fileName: 'pasted-logs.txt',
-              fileType: 'log'
-            })
+              fileName: "pasted-logs.txt",
+              fileType: "log",
+            }),
           })
-          
           if (response.ok) {
             aiAnalysisResults = await response.json()
           }
-        } catch (aiError) {
-          console.warn('AI analysis failed, continuing with basic analysis:', aiError)
+        } catch (err) {
+          console.warn("AI analysis failed for pasted logs:", err)
         }
-        
+
         localStorage.setItem("debugReportData", JSON.stringify(parsedData))
         if (aiAnalysisResults) {
           localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
         }
-      } else if (files.length > 0) {
-        // Handle file uploads with AI analysis
-        const filesToAnalyze = files.map(f => ({
+      }
+
+      // 🧠 Case 2: extracted files from ZIP (selected ones)
+      const selectedExtracted = extractedFiles.filter((f) => f.selected && f.content)
+      if (selectedExtracted.length > 0) {
+        const combinedLogs = selectedExtracted
+          .filter((f) => f.path.endsWith(".log") || f.path.endsWith(".txt"))
+          .map((f) => f.content)
+          .join("\n")
+
+        if (combinedLogs) {
+          parsedData = parseLogFile(combinedLogs)
+          localStorage.setItem("debugReportData", JSON.stringify(parsedData))
+
+          try {
+            const response = await fetch(`${API_BASE}/api/analyze/file`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                content: combinedLogs,
+                fileName: "combined-logs.txt",
+                fileType: "log",
+              }),
+            })
+            if (response.ok) {
+              aiAnalysisResults = await response.json()
+              localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+            }
+          } catch (err) {
+            console.warn("AI analysis failed for ZIP logs:", err)
+          }
+        }
+      }
+
+      // 🧠 Case 3: uploaded files
+      if (files.length > 0) {
+        const filesToAnalyze = files.map((f) => ({
           fileName: f.name,
-          fileType: f.name.split('.').pop() || 'unknown',
-          content: null as string | null // Will be populated below
+          fileType: f.name.split(".").pop() || "unknown",
+          content: null as string | null,
         }))
 
-        // Read file contents
         for (let i = 0; i < files.length; i++) {
           try {
             filesToAnalyze[i].content = await files[i].text()
@@ -81,57 +140,47 @@ export default function Home() {
           }
         }
 
-        // Filter out files that couldn't be read
         const validFiles = filesToAnalyze.filter((f): f is { fileName: string; fileType: string; content: string } => f.content !== null)
 
         if (validFiles.length > 0) {
-          // Check if any are log files for basic parsing
-          const logFiles = validFiles.filter(f => f.fileType === 'log' || f.fileType === 'txt')
+          const logFiles = validFiles.filter((f) => f.fileType === "log" || f.fileType === "txt")
           if (logFiles.length > 0) {
             parsedData = parseLogFile(logFiles[0].content)
             localStorage.setItem("debugReportData", JSON.stringify(parsedData))
           }
 
-          // Perform AI analysis on all files
           try {
             const response = await fetch(`${API_BASE}/api/analyze/batch`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ files: validFiles })
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ files: validFiles }),
             })
-            
             if (response.ok) {
               aiAnalysisResults = await response.json()
               localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
             }
           } catch (aiError) {
-            console.warn('AI analysis failed, continuing with basic analysis:', aiError)
+            console.warn("AI analysis failed on batch:", aiError)
           }
         }
-        // If a single uploaded file is a zip, send it to the zip analyzer
-        const zip = files.find(f => f.name.toLowerCase().endsWith('.zip'))
+
+        // Extra ZIP-level AI endpoint for uploaded ZIPs
+        const zip = files.find((f) => f.name.toLowerCase().endsWith(".zip"))
         if (zip) {
           try {
             const buf = await zip.arrayBuffer()
             const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
             const response = await fetch(`${API_BASE}/api/analyze/zip`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ zipBase64: base64 })
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ zipBase64: base64 }),
             })
             if (response.ok) {
               const zipResults = await response.json()
-              console.log("[Page] Storing AI zip results:", {
-                riskHeatmap: zipResults.riskHeatmap?.length || 0,
-                loggingScores: zipResults.loggingScores?.length || 0,
-                piiFindings: zipResults.piiFindings?.length || 0,
-                errorFlows: zipResults.errorFlows?.length || 0,
-                summary: zipResults.summary ? 'present' : 'missing'
-              });
-              localStorage.setItem('aiZipResults', JSON.stringify(zipResults))
+              localStorage.setItem("aiZipResults", JSON.stringify(zipResults))
             }
           } catch (e) {
-            console.warn('Zip analysis failed:', e)
+            console.warn("Zip analysis failed:", e)
           }
         }
       }
@@ -139,13 +188,65 @@ export default function Home() {
       console.error("Error during analysis:", error)
     }
 
-    // Simulate analysis time
     await new Promise((resolve) => setTimeout(resolve, 1500))
-
     router.push("/report")
   }
 
-  const hasInput = files.length > 0 || pastedLogs.trim().length > 0
+  const handleAnalysisTypeSelection = (type: string) => {
+    setSelectedAnalysisTypes((prevSelected) => {
+      if (prevSelected.includes(type)) {
+        return prevSelected.filter((t) => t !== type) // Deselect the type
+      } else {
+        return [...prevSelected, type] // Select the type
+      }
+    })
+  }
+
+  const features = [
+    {
+      id: "logging-quality" as FeatureType,
+      icon: BarChart3,
+      title: "Logging Quality Score",
+      description: "Analyze your logging coverage and identify modules that need better observability",
+      color: "bg-blue-50 dark:bg-blue-950",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      borderColor: "border-blue-200 dark:border-blue-800",
+    },
+    {
+      id: "error-flow" as FeatureType,
+      icon: AlertTriangle,
+      title: "Error-Flow Mapping",
+      description: "Visualize how warnings escalate into crashes through your call chain",
+      color: "bg-red-50 dark:bg-red-950",
+      iconColor: "text-red-600 dark:text-red-400",
+      borderColor: "border-red-200 dark:border-red-800",
+    },
+    {
+      id: "sensitive-data" as FeatureType,
+      icon: Shield,
+      title: "Sensitive Data Detection",
+      description: "Automatically detect and flag sensitive information like tokens or passwords in logs",
+      color: "bg-amber-50 dark:bg-amber-950",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      borderColor: "border-amber-200 dark:border-amber-800",
+    },
+    {
+      id: "recommendations" as FeatureType,
+      icon: Lightbulb,
+      title: "Code Recommendations",
+      description: "Analyze recurring issues to prevent repetitive fixes and enhance software stability",
+      color: "bg-green-50 dark:bg-green-950",
+      iconColor: "text-green-600 dark:text-green-400",
+      borderColor: "border-green-200 dark:border-green-800",
+    },
+  ]
+
+  const hasInput =
+    files.length > 0 ||
+    pastedLogs.trim().length > 0 ||
+    extractedFiles.filter((f) => f.selected).length > 0
+
+    
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -162,19 +263,16 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-3xl space-y-8">
-          {/* Hero Section */}
-          {!hasInput && (
-            <div className="text-center space-y-4 mb-12">
-              <div className="inline-flex items-center justify-center size-20 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 mb-4">
-                <SunshineLogo className="size-12" />
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight">Illuminate Your Code with AI</h1>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto text-balance">
-                Upload your log files and codebase to get intelligent insights on errors, logging quality, sensitive
-                data exposure, and actionable recommendations.
-              </p>
+          <div className="text-center space-y-4 mb-12">
+            <div className="inline-flex items-center justify-center size-20 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 mb-4">
+              <SunshineLogo className="size-12" />
             </div>
-          )}
+            <h1 className="text-4xl font-bold tracking-tight">Illuminate Your Code with AI</h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto text-balance">
+              Upload your log files or zipped codebase to get intelligent insights on errors,
+              logging quality, sensitive data exposure, and more.
+            </p>
+          </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
@@ -183,25 +281,22 @@ export default function Home() {
               </label>
               <Textarea
                 id="paste-logs"
-                placeholder="Paste your logs here... (e.g., from terminal output)\n\n2025-10-16 14:10:21 INFO  UserService - User login successful\n2025-10-16 14:12:47 ERROR EpisodeService - NullPointerException at EpisodeService.java:231"
+                placeholder="Paste your logs here..."
                 value={pastedLogs}
                 onChange={(e) => {
                   const v = e.target.value
-                  // Detect likely base64 ZIP (starts with "UEsDB") or oversized input
-                  const looksLikeZipBase64 = v.startsWith("UEsDB")
-                  if (looksLikeZipBase64) {
-                    alert("Detected zipped content. Please upload the .zip file using the Upload area instead of pasting.")
+                  if (v.startsWith("UEsDB")) {
+                    alert("Detected zipped content. Please upload the .zip file instead.")
                     return
                   }
                   if (v.length > MAX_PASTE_CHARS) {
-                    alert("Pasted content is too large. Please upload as a file (supports .zip, .log, .txt).")
+                    alert("Pasted content is too large. Please upload as a file.")
                     return
                   }
                   setPastedLogs(v)
                 }}
                 className="min-h-[200px] font-mono text-sm resize-y"
               />
-              <p className="text-xs text-muted-foreground">For codebases, upload a <code>.zip</code> via the Upload area below. The paste box is for text logs only.</p>
               {pastedLogs.trim() && (
                 <p className="text-xs text-muted-foreground">
                   {pastedLogs.split("\n").filter((line) => line.trim()).length} log lines detected
@@ -221,42 +316,69 @@ export default function Home() {
             )}
           </div>
 
-          {/* File Upload Area */}
+          {/* File Upload */}
+          {files.length === 0 && (
           <FileUploadArea onFilesAdded={handleFilesAdded} />
+          )}
 
-          {/* Uploaded Files List */}
+          {/* Uploaded Files */}
           {files.length > 0 && (
-            <div className="space-y-4">
-              <UploadedFilesList files={files} onRemoveFile={handleRemoveFile} />
+            <UploadedFilesList files={files} onRemoveFile={handleRemoveFile} />
+          )}
 
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
-                  {pastedLogs.trim()
-                    ? `${pastedLogs.split("\n").filter((line) => line.trim()).length} log lines`
-                    : `${files.length} ${files.length === 1 ? "file" : "files"}`}{" "}
-                  ready for analysis
-                </p>
-                <Button size="lg" onClick={handleAnalyze} disabled={isAnalyzing} className="gap-2">
-                  {isAnalyzing ? (
-                    <>
-                      <div className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="size-4" />
-                      Generate Report
-                    </>
-                  )}
-                </Button>
-              </div>
+          {/* ZIP Explorer */}
+          {showZipExplorer && extractedFiles.length > 0 && (
+            <div className="max-w-full overflow-hidden rounded-xl border border-border/50 bg-background p-1">
+              <ZipFileExplorer
+                files={extractedFiles}
+                onFilesChange={setExtractedFiles}
+                onClose={() => setShowZipExplorer(false)}
+              />
             </div>
           )}
 
-          {pastedLogs.trim() && files.length === 0 && (
+
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+              Select Analysis Types {selectedAnalysisTypes.length > 0 && `(${selectedAnalysisTypes.length} selected)`}
+          </h3>
+
+          {/* Feature Selection (Styled like the image) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map(({ id, icon: Icon, title, description, color, iconColor, borderColor }) => {
+              const isSelected = selectedAnalysisTypes.includes(id)
+              return (
+                <div
+                  key={id}
+                  onClick={() => handleAnalysisTypeSelection(id)}
+                  className={`relative rounded-lg p-6 space-y-2 cursor-pointer border-1 
+                    ${isSelected ? `border-black ring-2 ring-black` : `border-gray-300`}`}        
+                >
+                  <div className={`size-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
+                    <Icon className={`size-5 ${iconColor}`} />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{title}</h3>
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 rounded-full bg-black text-white p-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {hasInput && (
             <div className="flex items-center justify-between pt-4">
               <p className="text-sm text-muted-foreground">
-                {pastedLogs.split("\n").filter((line) => line.trim()).length} log lines ready for analysis
+                {pastedLogs.trim()
+                  ? `${pastedLogs.split("\n").filter((line) => line.trim()).length} log lines ready`
+                  : extractedFiles.filter((f) => f.selected).length > 0
+                  ? `${extractedFiles.filter((f) => f.selected).length} files selected from ZIP`
+                  : `${files.length} ${files.length === 1 ? "file" : "files"} ready`}{" "}
+                for analysis
               </p>
               <Button size="lg" onClick={handleAnalyze} disabled={isAnalyzing} className="gap-2">
                 {isAnalyzing ? (
@@ -271,79 +393,6 @@ export default function Home() {
                   </>
                 )}
               </Button>
-            </div>
-          )}
-
-          {/* Features */}
-          {!hasInput && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-8">
-              <div className="rounded-lg border border-border/50 bg-card p-6 space-y-2">
-                <div className="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center mb-3">
-                  <svg className="size-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="font-semibold">Logging Quality Score</h3>
-                <p className="text-sm text-muted-foreground">
-                  Analyze your logging coverage and identify modules that need better observability.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border/50 bg-card p-6 space-y-2">
-                <div className="size-10 rounded-lg bg-red-500/10 flex items-center justify-center mb-3">
-                  <svg className="size-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="font-semibold">Error Flow Mapping</h3>
-                <p className="text-sm text-muted-foreground">
-                  Visualize how warnings escalate into crashes through your call chain.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border/50 bg-card p-6 space-y-2">
-                <div className="size-10 rounded-lg bg-yellow-500/10 flex items-center justify-center mb-3">
-                  <svg className="size-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="font-semibold">Sensitive Data Detection</h3>
-                <p className="text-sm text-muted-foreground">
-                  Automatically detect and flag sensitive information like NRIC or patient data in logs.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border/50 bg-card p-6 space-y-2">
-                <div className="size-10 rounded-lg bg-green-500/10 flex items-center justify-center mb-3">
-                  <svg className="size-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="font-semibold">Recurring Bug Patterns</h3>
-                <p className="text-sm text-muted-foreground">
-                  Identify patterns in past logs to prevent fixing the same bug repeatedly.
-                </p>
-              </div>
             </div>
           )}
         </div>
