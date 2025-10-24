@@ -304,8 +304,8 @@ export default function DebugReport() {
   return (
     <div className="min-h-screen bg-background">
       <Header overallScore={logData?.summary.overallScore} logData={logData} />
-      <div className="flex">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <div className="flex flex-col lg:flex-row">
+        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection}/>
         <main className="flex-1 ml-64 pt-20 px-8 pb-16">
           <div className="max-w-7xl mx-auto space-y-12">
             <section id="summary">

@@ -10,15 +10,10 @@ interface SidebarProps {
 
 const sections = [
   { id: "summary", label: "Summary", icon: Search },
-  // { id: "ai-summary", label: "AI Summary", icon: Brain },
   { id: "logging-quality", label: "Logging Quality", icon: BarChart3 },
   { id: "error-flows", label: "Error Flows", icon: GitBranch },
   { id: "sensitive-data", label: "Sensitive Data", icon: Shield },
-  { id: "ai-sensitive-data", label: "AI Sensitive Data", icon: Brain },
-  { id: "ai-vulnerabilities", label: "AI Vulnerabilities", icon: Bug },
-  // { id: "recurring-bugs", label: "Recurring Bugs", icon: RefreshCw },
-  { id: "code-improvements", label: "Code Improvements", icon: Code2 },
-  { id: "recommendations", label: "Recommendations", icon: Lightbulb },
+  { id: "recommendations", label: "Recommendations", icon: Code2 },
 ]
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
@@ -30,6 +25,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const id = entry.target.id
+            console.log(`Section ${id} is in view`); 
             setCurrentSection(id)
             onSectionChange(id)
           }
@@ -52,7 +48,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       const offset = 80
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - offset
-
+      console.log(`Scrolling to: ${id}, Offset position: ${offsetPosition}`);
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",

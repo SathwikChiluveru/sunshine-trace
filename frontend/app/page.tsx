@@ -12,9 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { SunshineLogo } from "@/components/sunshine-logo"
 import { extractZipFile, type ExtractedFile } from "@/lib/zip-utils"
 import { ZipFileExplorer } from "@/components/zip-file-explorer"
-import { Upload, BarChart3, AlertTriangle, Shield, RefreshCw } from "lucide-react"
+import { Upload, BarChart3, AlertTriangle, Shield, RefreshCw, Lightbulb } from "lucide-react"
 
-type FeatureType = "logging-quality" | "error-flow" | "sensitive-data" | "bug-patterns"
+type FeatureType = "logging-quality" | "error-flow" | "sensitive-data" | "recommendations"
 
 export default function Home() {
   const router = useRouter()
@@ -231,10 +231,10 @@ export default function Home() {
       borderColor: "border-amber-200 dark:border-amber-800",
     },
     {
-      id: "bug-patterns" as FeatureType,
-      icon: RefreshCw,
-      title: "Recurring Bug Patterns",
-      description: "Identify patterns in your logs to prevent fixing the same issue repeatedly",
+      id: "recommendations" as FeatureType,
+      icon: Lightbulb,
+      title: "Code Recommendations",
+      description: "Analyze recurring issues to prevent repetitive fixes and enhance software stability",
       color: "bg-green-50 dark:bg-green-950",
       iconColor: "text-green-600 dark:text-green-400",
       borderColor: "border-green-200 dark:border-green-800",
