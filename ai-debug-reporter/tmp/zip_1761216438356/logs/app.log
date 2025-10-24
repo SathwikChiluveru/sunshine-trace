@@ -1,0 +1,17 @@
+2025-10-23 14:10:00 INFO  [AuthService] - User 'alice' successfully authenticated (IP: 10.1.2.3)
+2025-10-23 14:10:01 DEBUG [SessionManager] - Session created with ID: SESS-98f5a0b8-3a41-4a0e
+2025-10-23 14:10:05 INFO  [UserService] - Contact email alice@example.com
+2025-10-23 14:11:10 ERROR [ConfigService] - API_KEY: sk_test_abcdefghijklmnopqrstuvwx1234
+2025-10-23 14:11:20 INFO  [PaymentGateway] - Credit card 4111 1111 1111 1111 charged for order ORD-7788
+2025-10-23 14:11:30 DEBUG [PatientService] - Loading record P1234567
+2025-10-23 14:11:35 INFO  [Notifier] - SMS sent to +6591234567
+2025-10-23 14:12:00 WARN  EpisodeService - Missing dischargeType field
+2025-10-23 14:12:03 ERROR EpisodeService - NullPointerException at EpisodeService.java:231
+2025-10-23 14:12:05 FATAL EpisodeService - System crashed due to null dischargeType
+2025-10-23 14:12:40 INFO  DBPool - Current pool size: 12
+2025-10-23 14:12:41 ERROR DBPool - Connection error: timeout after 1200ms
+2025-10-23 14:13:00 WARN  PaymentGateway - Retrying transaction TXN-8842
+2025-10-23 14:13:02 ERROR PaymentGateway - Transaction failed for ID TXN-8842
+2025-10-23 14:13:04 ERROR PaymentGateway - Second failure for transaction TXN-8842
+2025-10-23 14:14:00 INFO  AuditLog - Request received for NRIC S1234567D
+2025-10-23 14:14:05 DEBUG AuditLog - CorrelationId: 2f5a8c10-0c9f-4e3c-8c11-8c1d2f3e4a55

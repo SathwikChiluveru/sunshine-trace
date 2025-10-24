@@ -1,0 +1,6 @@
+{
+  "name": "sunshine-trace-ai-sample",
+  "version": "1.0.0",
+  "description": "Tiny codebase to exercise Sunshine Trace AI",
+  "dependencies": { "express": "^4.19.2" }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "sunshine-test-comprehensive",
+  "version": "1.0.0",
+  "description": "Comprehensive test codebase for Sunshine Trace analysis",
+  "dependencies": { 
+    "express": "^4.19.2",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0"
+  }
+}

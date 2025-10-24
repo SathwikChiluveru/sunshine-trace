@@ -10,12 +10,15 @@ import { parseLogFile } from "@/lib/log-parser"
 import type { ParsedLogData } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
 import { SunshineLogo } from "@/components/sunshine-logo"
+import { AIAnalyzer } from "@/lib/ai-analyzer"
 
 export default function Home() {
   const router = useRouter()
   const [files, setFiles] = useState<File[]>([])
   const [pastedLogs, setPastedLogs] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5000'
+  const MAX_PASTE_CHARS = 200_000 // ~200 KB to avoid OOM by pasting huge data like base64 zips
 
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles((prev) => [...prev, ...newFiles])
@@ -31,28 +34,112 @@ export default function Home() {
     setIsAnalyzing(true)
 
     let parsedData: ParsedLogData | null = null
+    let aiAnalysisResults: any = null
 
-    if (pastedLogs.trim()) {
-      try {
+    try {
+      if (pastedLogs.trim()) {
+        // Parse basic log data
         parsedData = parseLogFile(pastedLogs)
-        localStorage.setItem("debugReportData", JSON.stringify(parsedData))
-      } catch (error) {
-        console.error("Error parsing pasted logs:", error)
-      }
-    } else if (files.length > 0) {
-      const logFiles = files.filter((f) => f.name.endsWith(".log") || f.name.endsWith(".txt"))
-
-      if (logFiles.length > 0) {
+        
+        // Perform AI analysis on pasted logs
         try {
-          const content = await logFiles[0].text()
-          parsedData = parseLogFile(content)
-          localStorage.setItem("debugReportData", JSON.stringify(parsedData))
-        } catch (error) {
-          console.error("Error parsing log file:", error)
+          const response = await fetch(`${API_BASE}/api/analyze/file`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: pastedLogs,
+              fileName: 'pasted-logs.txt',
+              fileType: 'log'
+            })
+          })
+          
+          if (response.ok) {
+            aiAnalysisResults = await response.json()
+          }
+        } catch (aiError) {
+          console.warn('AI analysis failed, continuing with basic analysis:', aiError)
+        }
+        
+        localStorage.setItem("debugReportData", JSON.stringify(parsedData))
+        if (aiAnalysisResults) {
+          localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+        }
+      } else if (files.length > 0) {
+        // Handle file uploads with AI analysis
+        const filesToAnalyze = files.map(f => ({
+          fileName: f.name,
+          fileType: f.name.split('.').pop() || 'unknown',
+          content: null as string | null // Will be populated below
+        }))
+
+        // Read file contents
+        for (let i = 0; i < files.length; i++) {
+          try {
+            filesToAnalyze[i].content = await files[i].text()
+          } catch (error) {
+            console.error(`Error reading file ${files[i].name}:`, error)
+          }
+        }
+
+        // Filter out files that couldn't be read
+        const validFiles = filesToAnalyze.filter((f): f is { fileName: string; fileType: string; content: string } => f.content !== null)
+
+        if (validFiles.length > 0) {
+          // Check if any are log files for basic parsing
+          const logFiles = validFiles.filter(f => f.fileType === 'log' || f.fileType === 'txt')
+          if (logFiles.length > 0) {
+            parsedData = parseLogFile(logFiles[0].content)
+            localStorage.setItem("debugReportData", JSON.stringify(parsedData))
+          }
+
+          // Perform AI analysis on all files
+          try {
+            const response = await fetch(`${API_BASE}/api/analyze/batch`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ files: validFiles })
+            })
+            
+            if (response.ok) {
+              aiAnalysisResults = await response.json()
+              localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+            }
+          } catch (aiError) {
+            console.warn('AI analysis failed, continuing with basic analysis:', aiError)
+          }
+        }
+        // If a single uploaded file is a zip, send it to the zip analyzer
+        const zip = files.find(f => f.name.toLowerCase().endsWith('.zip'))
+        if (zip) {
+          try {
+            const buf = await zip.arrayBuffer()
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
+            const response = await fetch(`${API_BASE}/api/analyze/zip`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ zipBase64: base64 })
+            })
+            if (response.ok) {
+              const zipResults = await response.json()
+              console.log("[Page] Storing AI zip results:", {
+                riskHeatmap: zipResults.riskHeatmap?.length || 0,
+                loggingScores: zipResults.loggingScores?.length || 0,
+                piiFindings: zipResults.piiFindings?.length || 0,
+                errorFlows: zipResults.errorFlows?.length || 0,
+                summary: zipResults.summary ? 'present' : 'missing'
+              });
+              localStorage.setItem('aiZipResults', JSON.stringify(zipResults))
+            }
+          } catch (e) {
+            console.warn('Zip analysis failed:', e)
+          }
         }
       }
+    } catch (error) {
+      console.error("Error during analysis:", error)
     }
 
+    // Simulate analysis time
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     router.push("/report")
@@ -98,9 +185,23 @@ export default function Home() {
                 id="paste-logs"
                 placeholder="Paste your logs here... (e.g., from terminal output)\n\n2025-10-16 14:10:21 INFO  UserService - User login successful\n2025-10-16 14:12:47 ERROR EpisodeService - NullPointerException at EpisodeService.java:231"
                 value={pastedLogs}
-                onChange={(e) => setPastedLogs(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  // Detect likely base64 ZIP (starts with "UEsDB") or oversized input
+                  const looksLikeZipBase64 = v.startsWith("UEsDB")
+                  if (looksLikeZipBase64) {
+                    alert("Detected zipped content. Please upload the .zip file using the Upload area instead of pasting.")
+                    return
+                  }
+                  if (v.length > MAX_PASTE_CHARS) {
+                    alert("Pasted content is too large. Please upload as a file (supports .zip, .log, .txt).")
+                    return
+                  }
+                  setPastedLogs(v)
+                }}
                 className="min-h-[200px] font-mono text-sm resize-y"
               />
+              <p className="text-xs text-muted-foreground">For codebases, upload a <code>.zip</code> via the Upload area below. The paste box is for text logs only.</p>
               {pastedLogs.trim() && (
                 <p className="text-xs text-muted-foreground">
                   {pastedLogs.split("\n").filter((line) => line.trim()).length} log lines detected

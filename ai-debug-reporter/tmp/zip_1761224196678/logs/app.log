@@ -1,0 +1,19 @@
+2025-01-23 10:00:00 INFO  [AuthService] - User 'john.doe@example.com' login attempt
+2025-01-23 10:00:01 WARN  [AuthService] - Invalid password for user john.doe@example.com
+2025-01-23 10:00:02 ERROR [AuthService] - Authentication failed for user john.doe@example.com
+2025-01-23 10:00:03 FATAL [AuthService] - System crash due to authentication service failure
+2025-01-23 10:01:00 INFO  [PaymentService] - Processing payment for user S1234567D
+2025-01-23 10:01:01 WARN  [PaymentService] - Payment amount exceeds limit for NRIC S1234567D
+2025-01-23 10:01:02 ERROR [PaymentService] - Payment declined for S1234567D
+2025-01-23 10:02:00 INFO  [UserService] - Creating user profile for alice@company.com
+2025-01-23 10:02:01 WARN  [UserService] - Missing required field 'phone' for alice@company.com
+2025-01-23 10:02:02 ERROR [UserService] - User creation failed for alice@company.com
+2025-01-23 10:03:00 INFO  [DatabaseService] - Connection pool exhausted
+2025-01-23 10:03:01 WARN  [DatabaseService] - Slow query detected: SELECT * FROM users
+2025-01-23 10:03:02 ERROR [DatabaseService] - Connection timeout after 30s
+2025-01-23 10:03:03 FATAL [DatabaseService] - Database service unavailable
+2025-01-23 10:04:00 INFO  [SecurityService] - Processing request for user +65-9876-5432
+2025-01-23 10:04:01 WARN  [SecurityService] - Suspicious activity detected for +65-9876-5432
+2025-01-23 10:04:02 ERROR [SecurityService] - Security violation for +65-9876-5432
+2025-01-23 10:05:00 INFO  [AppService] - System startup completed
+2025-01-23 10:05:01 INFO  [AppService] - Health check passed

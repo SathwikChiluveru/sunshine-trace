@@ -9,6 +9,13 @@ interface SensitiveDataSectionProps {
 
 export function SensitiveDataSection({ data }: SensitiveDataSectionProps) {
   const detections = data?.piiFindings || []
+  
+  console.log("[SensitiveDataSection] Received data:", {
+    hasData: !!data,
+    piiFindings: data?.piiFindings?.length || 0,
+    detections: detections.length,
+    sampleDetection: detections[0]
+  });
 
   const getSeverityColor = (severity: string) => {
     if (severity === "critical") return "error"

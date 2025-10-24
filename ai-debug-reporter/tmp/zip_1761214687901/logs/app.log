@@ -1,0 +1,10 @@
+2025-10-16 14:10:21 INFO  [AuthService] - User login successful for alice@example.com
+2025-10-16 14:12:47 DEBUG [SessionManager] - Session created with ID: SESS-98f5a0b8
+2025-10-16 14:13:00 WARN  [DBPool] - Connections nearing limit
+2025-10-16 14:13:02 ERROR [DBPool] - Timeout while querying patient NRIC S1234567D
+2025-10-16 14:13:10 WARN  EpisodeService - Missing dischargeType field
+2025-10-16 14:13:12 ERROR EpisodeService - NullPointerException at EpisodeService.java:231
+2025-10-16 14:13:15 FATAL EpisodeService - System crashed due to null dischargeType
+2025-10-16 14:14:00 INFO  PaymentGateway - Retrying transaction TXN-8842
+2025-10-16 14:14:02 ERROR PaymentGateway - Transaction failed for ID TXN-8842
+2025-10-16 14:14:04 ERROR PaymentGateway - Second failure for transaction TXN-8842

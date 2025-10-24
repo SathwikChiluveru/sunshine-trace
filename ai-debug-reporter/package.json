@@ -7,7 +7,16 @@
     "debug:report": "node packages/debug-report-cli/bin/debug-report.js --logs \"logs/**/*.log\" --src . --out reports/",
     "report:summary": "node tools/ai-summarizer/summarizer.js",
     "report:render": "node tools/report-renderer/render.js reports/findings.json reports/debug_report.html",
-    "report:all": "npm run debug:report && npm run report:summary && npm run report:render"
+    "report:all": "npm run debug:report && npm run report:summary && npm run report:render",
+    "ai:analyze": "node tools/ai-analyzer/analyzer.js",
+    "ai:sensitive": "node tools/ai-analyzer/analyzer.js sensitive_data",
+    "ai:vulnerabilities": "node tools/ai-analyzer/analyzer.js vulnerabilities",
+    "ai:quality": "node tools/ai-analyzer/analyzer.js code_quality",
+    "ai:risk": "node tools/ai-analyzer/analyzer.js risk_assessment",
+    "ai:flow": "node tools/ai-analyzer/analyzer.js error_flow",
+    "ai:codebase": "node tools/ai-analyzer/analyzer.js codebase",
+    "env:openrouter": "powershell -NoProfile -Command Copy-Item -Force .env.openrouter .env",
+    "env:vllm": "powershell -NoProfile -Command Copy-Item -Force .env.vllm .env"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +27,8 @@
     "ejs": "^3.1.9",
     "express": "^5.1.0",
     "glob": "^7.2.3",
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "adm-zip": "^0.5.10",
+    "dotenv": "^16.4.5"
   }
 }

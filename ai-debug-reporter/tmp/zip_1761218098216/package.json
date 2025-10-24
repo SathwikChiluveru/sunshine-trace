@@ -1,0 +1,6 @@
+{
+  "name": "ai-showcase",
+  "version": "1.0.0",
+  "description": "Codebase that lights up Sunshine Trace sections",
+  "dependencies": { "express": "^4.19.2" }
+}
