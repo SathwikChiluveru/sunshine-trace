@@ -213,6 +213,7 @@ export default function DebugReport() {
           const piiFindings: any[] = []
           const errorFlows: any[] = []
           const aiRecommendations: string[] = []
+          const codeFixes: Array<{title: string, code: string, description: string}> = []
           
           for (const result of parsed.results) {
             // Process vulnerability analysis results for AI recommendations
@@ -257,6 +258,16 @@ export default function DebugReport() {
                   console.log(`[Report] No structured recommendations found, extracting from raw text for ${result.fileName}`)
                   const rawText = result.vulnerabilities
                   
+                  // Debug: Show what code blocks we found
+                  const allBlocks = rawText.match(/```[\s\S]*?```/g)
+                  console.log(`[Report] Found ${allBlocks?.length || 0} code blocks in AI response`)
+                  if (allBlocks) {
+                    allBlocks.forEach((block: string, index: number) => {
+                      const preview = block.substring(0, 100).replace(/\n/g, ' ')
+                      console.log(`[Report] Code block ${index + 1}: ${preview}...`)
+                    })
+                  }
+                  
                   // Look for "Fix:" patterns in the text
                   const fixMatches = rawText.match(/- \*\*Fix:\*\* ([^\n]+)/g)
                   if (fixMatches) {
@@ -268,17 +279,91 @@ export default function DebugReport() {
                     })
                   }
                   
-                  // Look for code block suggestions
-                  const codeBlockMatches = rawText.match(/```[\s\S]*?```/g)
-                  if (codeBlockMatches) {
-                    codeBlockMatches.forEach((block: string) => {
-                      if (block.includes('bcrypt') || block.includes('validate') || block.includes('hash')) {
-                        const suggestion = block.includes('bcrypt') ? 'Use bcrypt for secure password hashing and comparison' :
-                                         block.includes('validate') ? 'Implement input validation for username and password' :
-                                         'Hash or anonymize sensitive data before logging'
-                        aiRecommendations.push(suggestion)
+                  // Extract JavaScript code blocks specifically (not JSON)
+                  const jsCodeBlocks = rawText.match(/```javascript[\s\S]*?```/gi)
+                  if (jsCodeBlocks) {
+                    jsCodeBlocks.forEach((block: string) => {
+                      const cleanCode = block.replace(/```javascript\n?/i, '').replace(/```$/, '').trim()
+                      
+                      if (cleanCode.length > 20 && !cleanCode.startsWith('{')) { // Skip JSON blocks
+                        let title = ''
+                        let description = ''
+                        
+                        if (cleanCode.includes('bcrypt') && cleanCode.includes('compare')) {
+                          title = 'Secure Password Authentication with bcrypt'
+                          description = 'Replace your current authentication logic with this secure bcrypt implementation'
+                        } else if (cleanCode.includes('validate') && cleanCode.includes('username')) {
+                          title = 'Input Validation Function'
+                          description = 'Add this validation function to check username and password inputs'
+                        } else if (cleanCode.includes('hash') && cleanCode.includes('username')) {
+                          title = 'Secure Logging with Hashed Usernames'
+                          description = 'Update your logging functions to hash sensitive data before logging'
+                        } else if (cleanCode.includes('timestamp') && cleanCode.includes('ISO')) {
+                          title = 'Enhanced Logging with Timestamps'
+                          description = 'Improve your logging functions with proper timestamps and structure'
+                        } else if (cleanCode.includes('function') || cleanCode.includes('const') || cleanCode.includes('async')) {
+                          title = 'Code Fix Implementation'
+                          description = 'Apply this code to fix the identified security issue'
+                        } else {
+                          title = 'Code Fix'
+                          description = 'Apply this code fix to resolve the identified issue'
+                        }
+                        
+                        codeFixes.push({
+                          title,
+                          code: cleanCode,
+                          description
+                        })
+                        
+                        // Also add a text recommendation
+                        aiRecommendations.push(`${title}: ${description}`)
                       }
                     })
+                  }
+                  
+                  // If no JavaScript blocks found, look for any code blocks that aren't JSON
+                  if (codeFixes.length === 0) {
+                    const allCodeBlocks = rawText.match(/```[\s\S]*?```/g)
+                    if (allCodeBlocks) {
+                      allCodeBlocks.forEach((block: string) => {
+                        const cleanCode = block.replace(/```\w*\n?/, '').replace(/```$/, '').trim()
+                        
+                        // Skip JSON blocks and only process actual code
+                        if (cleanCode.length > 20 && 
+                            !cleanCode.startsWith('{') && 
+                            !cleanCode.startsWith('[') &&
+                            (cleanCode.includes('function') || cleanCode.includes('const') || cleanCode.includes('async') || cleanCode.includes('require'))) {
+                          
+                          let title = ''
+                          let description = ''
+                          
+                          if (cleanCode.includes('bcrypt')) {
+                            title = 'Secure Password Authentication with bcrypt'
+                            description = 'Replace your current authentication logic with this secure bcrypt implementation'
+                          } else if (cleanCode.includes('validate')) {
+                            title = 'Input Validation Function'
+                            description = 'Add this validation function to check username and password inputs'
+                          } else if (cleanCode.includes('hash') || cleanCode.includes('anonymize')) {
+                            title = 'Secure Logging with Hashed Usernames'
+                            description = 'Update your logging functions to hash sensitive data before logging'
+                          } else if (cleanCode.includes('timestamp')) {
+                            title = 'Enhanced Logging with Timestamps'
+                            description = 'Improve your logging functions with proper timestamps and structure'
+                          } else {
+                            title = 'Code Fix Implementation'
+                            description = 'Apply this code to fix the identified security issue'
+                          }
+                          
+                          codeFixes.push({
+                            title,
+                            code: cleanCode,
+                            description
+                          })
+                          
+                          aiRecommendations.push(`${title}: ${description}`)
+                        }
+                      })
+                    }
                   }
                   
                   // Look for specific recommendation patterns
@@ -468,19 +553,22 @@ export default function DebugReport() {
             const uniqueRecommendations = [...new Set(combinedRecommendations)].slice(0, 10)
             
             const aiSummary = {
-              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} Analyzed ${parsed.results.length} file(s).`,
+              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} ${codeFixes.length > 0 ? `${codeFixes.length} copy-paste ready code fixes available.` : ''} Analyzed ${parsed.results.length} file(s).`,
               top_risks: [
                 ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
                 ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
                 ...(hasAiRecommendations ? [{ risk: "Security Vulnerabilities", severity: "HIGH", description: `${aiRecommendations.length} AI-identified issues require attention` }] : [])
               ],
-              recommended_actions: uniqueRecommendations
+              recommended_actions: uniqueRecommendations,
+              code_fixes: codeFixes
             }
             
             setSummaryData(aiSummary)
             setHasDynamicSummary(true)
             console.log("[Report] Generated AI-based summary from individual file analysis with", aiRecommendations.length, "AI recommendations")
             console.log("[Report] AI Recommendations:", aiRecommendations)
+            console.log("[Report] Code Fixes Found:", codeFixes.length)
+            console.log("[Report] Code Fixes:", codeFixes)
             console.log("[Report] Final combined recommendations:", uniqueRecommendations)
           }
         }
