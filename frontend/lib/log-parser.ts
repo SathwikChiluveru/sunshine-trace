@@ -176,14 +176,22 @@ export function parseLogFile(content: string): ParsedLogData {
     errorCorrelations,
     serviceQuality,
     summary,
-    // Integrate real data from findings.json and summary.json
-    recurringProblems: REAL_DEBUG_DATA.recurringProblems,
-    errorFlows: REAL_DEBUG_DATA.errorFlows,
-    actionableFixes: REAL_DEBUG_DATA.actionableFixes,
-    aiSummary: REAL_DEBUG_DATA.aiSummary,
-    // Additional data for components
-    riskHeatmap: REAL_DEBUG_DATA.riskHeatmap,
-    loggingScores: REAL_DEBUG_DATA.loggingScores,
+    // Only include static data in development mode to avoid interfering with real AI analysis
+    ...(process.env.NODE_ENV === 'development' ? {
+      recurringProblems: REAL_DEBUG_DATA.recurringProblems,
+      errorFlows: REAL_DEBUG_DATA.errorFlows,
+      actionableFixes: REAL_DEBUG_DATA.actionableFixes,
+      aiSummary: REAL_DEBUG_DATA.aiSummary,
+      riskHeatmap: REAL_DEBUG_DATA.riskHeatmap,
+      loggingScores: REAL_DEBUG_DATA.loggingScores,
+    } : {
+      recurringProblems: [],
+      errorFlows: [],
+      actionableFixes: [],
+      aiSummary: null,
+      riskHeatmap: [],
+      loggingScores: [],
+    }),
   }
 }
 
@@ -335,8 +343,10 @@ function detectSensitiveData(entries: LogEntry[]): SensitiveDataMatch[] {
     }
   })
 
-  // If no sensitive data found in parsed logs, include real data from findings.json
-  if (matches.length === 0 && REAL_DEBUG_DATA.sensitiveDataFindings.length > 0) {
+  // Only use static data if no real data is found AND we're in demo mode
+  // This prevents static data from interfering with real AI analysis
+  if (matches.length === 0 && process.env.NODE_ENV === 'development' && REAL_DEBUG_DATA.sensitiveDataFindings.length > 0) {
+    console.log("[LogParser] Using static demo data for sensitive data detection")
     // Convert findings.json format to our format
     REAL_DEBUG_DATA.sensitiveDataFindings.forEach((finding) => {
       matches.push({

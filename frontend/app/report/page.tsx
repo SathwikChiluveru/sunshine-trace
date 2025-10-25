@@ -57,6 +57,21 @@ export default function DebugReport() {
         console.log(`[Report] Found generic fence, parsing...`)
         return JSON.parse(fenceAny[1])
       }
+      
+      // Look for JSON array pattern in the text
+      const jsonArrayMatch = text.match(/\[[\s\S]*?\]/)
+      if (jsonArrayMatch) {
+        console.log(`[Report] Found JSON array pattern, parsing...`)
+        return JSON.parse(jsonArrayMatch[0])
+      }
+      
+      // Look for JSON object pattern in the text
+      const jsonObjectMatch = text.match(/\{[\s\S]*?\}/)
+      if (jsonObjectMatch) {
+        console.log(`[Report] Found JSON object pattern, parsing...`)
+        return JSON.parse(jsonObjectMatch[0])
+      }
+      
       // Last resort: attempt to parse the whole string
       console.log(`[Report] Trying to parse entire string as JSON...`)
       return JSON.parse(text)
@@ -197,8 +212,99 @@ export default function DebugReport() {
           const loggingScores: any[] = []
           const piiFindings: any[] = []
           const errorFlows: any[] = []
+          const aiRecommendations: string[] = []
           
           for (const result of parsed.results) {
+            // Process vulnerability analysis results for AI recommendations
+            if (result.vulnerabilities && !result.vulnerabilities.error) {
+              try {
+                const vulnerabilityData = typeof result.vulnerabilities === 'string'
+                  ? extractJsonBlock(result.vulnerabilities)
+                  : result.vulnerabilities
+                
+                console.log(`[Report] Processing vulnerabilities for ${result.fileName}:`, {
+                  hasVulnerabilityData: !!vulnerabilityData,
+                  vulnerabilityDataKeys: vulnerabilityData ? Object.keys(vulnerabilityData) : [],
+                  vulnerabilities: vulnerabilityData?.vulnerabilities?.length || 0,
+                  fullVulnerabilityData: vulnerabilityData
+                })
+                
+                // Extract AI-generated recommendations from vulnerability analysis
+                if (vulnerabilityData?.vulnerabilities && Array.isArray(vulnerabilityData.vulnerabilities)) {
+                  vulnerabilityData.vulnerabilities.forEach((vuln: any) => {
+                    if (vuln.fix && typeof vuln.fix === 'string') {
+                      aiRecommendations.push(vuln.fix)
+                    }
+                  })
+                }
+                
+                // Also extract summary recommendations if available
+                if (vulnerabilityData?.summary && typeof vulnerabilityData.summary === 'string') {
+                  // Extract actionable recommendations from summary
+                  const summaryLines = vulnerabilityData.summary.split('\n').filter((line: string) => 
+                    line.trim().length > 0 && 
+                    (line.includes('recommend') || line.includes('suggest') || line.includes('should') || line.includes('implement'))
+                  )
+                  summaryLines.forEach((line: string) => {
+                    if (line.trim().length > 10) { // Only add substantial recommendations
+                      aiRecommendations.push(line.trim())
+                    }
+                  })
+                }
+                
+                // If no structured data found, try to extract from the raw response text
+                if (aiRecommendations.length === 0 && result.vulnerabilities && typeof result.vulnerabilities === 'string') {
+                  console.log(`[Report] No structured recommendations found, extracting from raw text for ${result.fileName}`)
+                  const rawText = result.vulnerabilities
+                  
+                  // Look for "Fix:" patterns in the text
+                  const fixMatches = rawText.match(/- \*\*Fix:\*\* ([^\n]+)/g)
+                  if (fixMatches) {
+                    fixMatches.forEach((match: string) => {
+                      const fix = match.replace(/- \*\*Fix:\*\* /, '').trim()
+                      if (fix.length > 10) {
+                        aiRecommendations.push(fix)
+                      }
+                    })
+                  }
+                  
+                  // Look for code block suggestions
+                  const codeBlockMatches = rawText.match(/```[\s\S]*?```/g)
+                  if (codeBlockMatches) {
+                    codeBlockMatches.forEach((block: string) => {
+                      if (block.includes('bcrypt') || block.includes('validate') || block.includes('hash')) {
+                        const suggestion = block.includes('bcrypt') ? 'Use bcrypt for secure password hashing and comparison' :
+                                         block.includes('validate') ? 'Implement input validation for username and password' :
+                                         'Hash or anonymize sensitive data before logging'
+                        aiRecommendations.push(suggestion)
+                      }
+                    })
+                  }
+                  
+                  // Look for specific recommendation patterns
+                  const recommendationPatterns = [
+                    /Use `bcrypt` to hash passwords during registration and compare them securely during authentication/gi,
+                    /Implement input validation to ensure `username` and `password` meet expected formats/gi,
+                    /Hash or anonymize sensitive fields like `username` before logging/gi,
+                    /Remove sensitive error codes from log messages or use a more generic error message in production/gi
+                  ]
+                  
+                  recommendationPatterns.forEach((pattern) => {
+                    const matches = rawText.match(pattern)
+                    if (matches) {
+                      matches.forEach((match: string) => {
+                        if (!aiRecommendations.includes(match)) {
+                          aiRecommendations.push(match)
+                        }
+                      })
+                    }
+                  })
+                }
+              } catch (parseError) {
+                console.warn(`[Report] Failed to parse vulnerabilities for ${result.fileName}:`, parseError)
+              }
+            }
+
             // Process code quality results for logging scores
             if (result.codeQuality && !result.codeQuality.error) {
               try {
@@ -268,6 +374,24 @@ export default function DebugReport() {
                       action: detection.suggestion || 'mask/hash',
                       confidence: detection.confidence || 0.8
                     })
+                    
+                    // Extract AI suggestions as recommendations
+                    if (detection.suggestion && typeof detection.suggestion === 'string') {
+                      aiRecommendations.push(detection.suggestion)
+                    }
+                  })
+                }
+                
+                // Also extract recommendations from sensitive data summary
+                if (sensitiveData.summary && typeof sensitiveData.summary === 'string') {
+                  const summaryLines = sensitiveData.summary.split('\n').filter((line: string) => 
+                    line.trim().length > 0 && 
+                    (line.includes('recommend') || line.includes('suggest') || line.includes('should') || line.includes('implement') || line.includes('mask') || line.includes('hash'))
+                  )
+                  summaryLines.forEach((line: string) => {
+                    if (line.trim().length > 10) {
+                      aiRecommendations.push(line.trim())
+                    }
                   })
                 }
               } catch (parseError) {
@@ -319,33 +443,45 @@ export default function DebugReport() {
           })
           
           // Generate dynamic summary from AI results
-          if (loggingScores.length > 0 || piiFindings.length > 0) {
+          if (loggingScores.length > 0 || piiFindings.length > 0 || aiRecommendations.length > 0) {
             const avgLoggingScore = loggingScores.length > 0 
               ? loggingScores.reduce((sum, score) => sum + score.score, 0) / loggingScores.length 
               : 0
             
             const poorLogging = avgLoggingScore < 50
             const hasPii = piiFindings.length > 0
+            const hasAiRecommendations = aiRecommendations.length > 0
             
             let healthStatus = "HEALTHY"
             if (poorLogging) healthStatus = "NEEDS_ATTENTION"
             if (hasPii) healthStatus = "NEEDS_ATTENTION"
+            if (hasAiRecommendations) healthStatus = "NEEDS_ATTENTION"
+            
+            // Combine AI-generated recommendations with basic recommendations
+            const combinedRecommendations = [
+              ...aiRecommendations, // AI-generated recommendations from vulnerability analysis
+              ...(poorLogging ? ["Implement structured logging with correlation IDs", "Add error codes and context to log messages"] : []),
+              ...(hasPii ? ["Mask or remove sensitive data from logs", "Implement data classification and handling policies"] : [])
+            ]
+            
+            // Remove duplicates and limit to reasonable number
+            const uniqueRecommendations = [...new Set(combinedRecommendations)].slice(0, 10)
             
             const aiSummary = {
-              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} Analyzed ${parsed.results.length} file(s).`,
+              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} Analyzed ${parsed.results.length} file(s).`,
               top_risks: [
                 ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
-                ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : [])
+                ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
+                ...(hasAiRecommendations ? [{ risk: "Security Vulnerabilities", severity: "HIGH", description: `${aiRecommendations.length} AI-identified issues require attention` }] : [])
               ],
-              recommended_actions: [
-                ...(poorLogging ? ["Implement structured logging with correlation IDs", "Add error codes and context to log messages"] : []),
-                ...(hasPii ? ["Mask or remove sensitive data from logs", "Implement data classification and handling policies"] : [])
-              ]
+              recommended_actions: uniqueRecommendations
             }
             
             setSummaryData(aiSummary)
             setHasDynamicSummary(true)
-            console.log("[Report] Generated AI-based summary from individual file analysis")
+            console.log("[Report] Generated AI-based summary from individual file analysis with", aiRecommendations.length, "AI recommendations")
+            console.log("[Report] AI Recommendations:", aiRecommendations)
+            console.log("[Report] Final combined recommendations:", uniqueRecommendations)
           }
         }
       } catch (error) {
