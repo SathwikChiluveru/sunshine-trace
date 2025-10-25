@@ -19,6 +19,7 @@ export default function DebugReport() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"
   console.log("[Report] API_BASE:", API_BASE)
   const [activeSection, setActiveSection] = useState("summary")
+  const [selectedAnalysisTypes, setSelectedAnalysisTypes] = useState<string[] | null>(null)
   const [logData, setLogData] = useState<ParsedLogData | null>(null)
   const [summaryData, setSummaryData] = useState<any>(null)
   const [findingsData, setFindingsData] = useState<any>(null)
@@ -36,7 +37,56 @@ export default function DebugReport() {
   })
   const summaryReqId = useRef(0)
   const findingsReqId = useRef(0)
+
+  // Safely extract a JSON object from an AI response that may contain markdown
+  function extractJsonBlock(text: string): any | null {
+    try {
+      if (!text || typeof text !== 'string') return null
+      console.log(`[Report] extractJsonBlock input length: ${text.length}`)
+      console.log(`[Report] extractJsonBlock input preview: ${text.substring(0, 200)}...`)
+      
+      // Prefer ```json fenced blocks
+      const fenceJson = text.match(/```json\s*([\s\S]*?)\s*```/i)
+      if (fenceJson?.[1]) {
+        console.log(`[Report] Found JSON fence, parsing...`)
+        return JSON.parse(fenceJson[1])
+      }
+      // Accept generic fenced blocks
+      const fenceAny = text.match(/```\s*([\s\S]*?)\s*```/)
+      if (fenceAny?.[1]) {
+        console.log(`[Report] Found generic fence, parsing...`)
+        return JSON.parse(fenceAny[1])
+      }
+      
+      // Look for JSON array pattern in the text
+      const jsonArrayMatch = text.match(/\[[\s\S]*?\]/)
+      if (jsonArrayMatch) {
+        console.log(`[Report] Found JSON array pattern, parsing...`)
+        return JSON.parse(jsonArrayMatch[0])
+      }
+      
+      // Look for JSON object pattern in the text
+      const jsonObjectMatch = text.match(/\{[\s\S]*?\}/)
+      if (jsonObjectMatch) {
+        console.log(`[Report] Found JSON object pattern, parsing...`)
+        return JSON.parse(jsonObjectMatch[0])
+      }
+      
+      // Last resort: attempt to parse the whole string
+      console.log(`[Report] Trying to parse entire string as JSON...`)
+      return JSON.parse(text)
+    } catch (error) {
+      console.log(`[Report] extractJsonBlock failed:`, error)
+      return null
+    }
+  }
   useEffect(() => {
+    // Load selected analysis types from localStorage to control rendering and fetching
+    try {
+      const sel = localStorage.getItem("selectedAnalysisTypes")
+      if (sel) setSelectedAnalysisTypes(JSON.parse(sel))
+    } catch {}
+
     // Try to load parsed log data from localStorage
     const storedData = localStorage.getItem("debugReportData")
     console.log("[Report] localStorage.debugReportData bytes:", storedData ? storedData.length : 0)
@@ -153,6 +203,287 @@ export default function DebugReport() {
       try {
         const parsed = JSON.parse(aiData)
         setAiAnalysisResults(parsed)
+        
+        // Process AI analysis results for individual file uploads
+        if (parsed?.results && Array.isArray(parsed.results)) {
+          console.log("[Report] Processing AI analysis results from individual files:", parsed.results.length, "files")
+          
+          // Extract logging quality scores from code quality analysis
+          const loggingScores: any[] = []
+          const piiFindings: any[] = []
+          const errorFlows: any[] = []
+          const aiRecommendations: string[] = []
+          
+          for (const result of parsed.results) {
+            // Process vulnerability analysis results for AI recommendations
+            if (result.vulnerabilities && !result.vulnerabilities.error) {
+              try {
+                const vulnerabilityData = typeof result.vulnerabilities === 'string'
+                  ? extractJsonBlock(result.vulnerabilities)
+                  : result.vulnerabilities
+                
+                console.log(`[Report] Processing vulnerabilities for ${result.fileName}:`, {
+                  hasVulnerabilityData: !!vulnerabilityData,
+                  vulnerabilityDataKeys: vulnerabilityData ? Object.keys(vulnerabilityData) : [],
+                  vulnerabilities: vulnerabilityData?.vulnerabilities?.length || 0,
+                  fullVulnerabilityData: vulnerabilityData
+                })
+                
+                // Extract AI-generated recommendations from vulnerability analysis
+                if (vulnerabilityData?.vulnerabilities && Array.isArray(vulnerabilityData.vulnerabilities)) {
+                  vulnerabilityData.vulnerabilities.forEach((vuln: any) => {
+                    if (vuln.fix && typeof vuln.fix === 'string') {
+                      aiRecommendations.push(vuln.fix)
+                    }
+                  })
+                }
+                
+                // Also extract summary recommendations if available
+                if (vulnerabilityData?.summary && typeof vulnerabilityData.summary === 'string') {
+                  // Extract actionable recommendations from summary
+                  const summaryLines = vulnerabilityData.summary.split('\n').filter((line: string) => 
+                    line.trim().length > 0 && 
+                    (line.includes('recommend') || line.includes('suggest') || line.includes('should') || line.includes('implement'))
+                  )
+                  summaryLines.forEach((line: string) => {
+                    if (line.trim().length > 10) { // Only add substantial recommendations
+                      aiRecommendations.push(line.trim())
+                    }
+                  })
+                }
+                
+                // If no structured data found, try to extract from the raw response text
+                if (aiRecommendations.length === 0 && result.vulnerabilities && typeof result.vulnerabilities === 'string') {
+                  console.log(`[Report] No structured recommendations found, extracting from raw text for ${result.fileName}`)
+                  const rawText = result.vulnerabilities
+                  
+                  // Look for "Fix:" patterns in the text
+                  const fixMatches = rawText.match(/- \*\*Fix:\*\* ([^\n]+)/g)
+                  if (fixMatches) {
+                    fixMatches.forEach((match: string) => {
+                      const fix = match.replace(/- \*\*Fix:\*\* /, '').trim()
+                      if (fix.length > 10) {
+                        aiRecommendations.push(fix)
+                      }
+                    })
+                  }
+                  
+                  // Look for code block suggestions
+                  const codeBlockMatches = rawText.match(/```[\s\S]*?```/g)
+                  if (codeBlockMatches) {
+                    codeBlockMatches.forEach((block: string) => {
+                      if (block.includes('bcrypt') || block.includes('validate') || block.includes('hash')) {
+                        const suggestion = block.includes('bcrypt') ? 'Use bcrypt for secure password hashing and comparison' :
+                                         block.includes('validate') ? 'Implement input validation for username and password' :
+                                         'Hash or anonymize sensitive data before logging'
+                        aiRecommendations.push(suggestion)
+                      }
+                    })
+                  }
+                  
+                  // Look for specific recommendation patterns
+                  const recommendationPatterns = [
+                    /Use `bcrypt` to hash passwords during registration and compare them securely during authentication/gi,
+                    /Implement input validation to ensure `username` and `password` meet expected formats/gi,
+                    /Hash or anonymize sensitive fields like `username` before logging/gi,
+                    /Remove sensitive error codes from log messages or use a more generic error message in production/gi
+                  ]
+                  
+                  recommendationPatterns.forEach((pattern) => {
+                    const matches = rawText.match(pattern)
+                    if (matches) {
+                      matches.forEach((match: string) => {
+                        if (!aiRecommendations.includes(match)) {
+                          aiRecommendations.push(match)
+                        }
+                      })
+                    }
+                  })
+                }
+              } catch (parseError) {
+                console.warn(`[Report] Failed to parse vulnerabilities for ${result.fileName}:`, parseError)
+              }
+            }
+
+            // Process code quality results for logging scores
+            if (result.codeQuality && !result.codeQuality.error) {
+              try {
+                const qualityData = typeof result.codeQuality === 'string' 
+                  ? extractJsonBlock(result.codeQuality) 
+                  : result.codeQuality
+                
+                console.log(`[Report] Processing code quality for ${result.fileName}:`, {
+                  hasQualityData: !!qualityData,
+                  qualityDataKeys: qualityData ? Object.keys(qualityData) : [],
+                  metrics: qualityData?.metrics,
+                  qualityScore: qualityData?.quality_score,
+                  fullQualityData: qualityData
+                })
+                
+                // Extract logging score from code quality analysis
+                let loggingScore = 0
+                let gaps = []
+                
+                if (qualityData?.metrics?.logging) {
+                  loggingScore = qualityData.metrics.logging
+                  console.log(`[Report] Found logging score in metrics: ${loggingScore}`)
+                } else if (qualityData?.quality_score) {
+                  // Use overall quality score as fallback
+                  loggingScore = qualityData.quality_score
+                  console.log(`[Report] Using overall quality score as fallback: ${loggingScore}`)
+                } else if (qualityData?.issues) {
+                  // Calculate score based on logging-related issues
+                  const loggingIssues = qualityData.issues.filter((issue: any) => 
+                    issue.description?.toLowerCase().includes('log') ||
+                    issue.type?.toLowerCase().includes('log')
+                  )
+                  loggingScore = Math.max(0, 100 - (loggingIssues.length * 20))
+                  gaps = loggingIssues.map((issue: any) => issue.description)
+                  console.log(`[Report] Calculated logging score from issues: ${loggingScore}`)
+                }
+                
+                if (loggingScore > 0) {
+                  loggingScores.push({
+                    module: result.fileName,
+                    score: loggingScore,
+                    gaps: gaps
+                  })
+                  console.log(`[Report] Added logging score for ${result.fileName}: ${loggingScore}`)
+                } else {
+                  console.log(`[Report] No logging score found for ${result.fileName}`)
+                }
+              } catch (parseError) {
+                console.warn(`[Report] Failed to parse code quality for ${result.fileName}:`, parseError)
+              }
+            }
+            
+            // Process sensitive data results
+            if (result.sensitiveData && !result.sensitiveData.error) {
+              try {
+                const sensitiveData = typeof result.sensitiveData === 'string'
+                  ? extractJsonBlock(result.sensitiveData)
+                  : result.sensitiveData
+                
+                if (sensitiveData.detections && Array.isArray(sensitiveData.detections)) {
+                  sensitiveData.detections.forEach((detection: any) => {
+                    piiFindings.push({
+                      type: detection.type || 'UNKNOWN',
+                      file: result.fileName,
+                      line: 0,
+                      sample: detection.value || 'detected',
+                      action: detection.suggestion || 'mask/hash',
+                      confidence: detection.confidence || 0.8
+                    })
+                    
+                    // Extract AI suggestions as recommendations
+                    if (detection.suggestion && typeof detection.suggestion === 'string') {
+                      aiRecommendations.push(detection.suggestion)
+                    }
+                  })
+                }
+                
+                // Also extract recommendations from sensitive data summary
+                if (sensitiveData.summary && typeof sensitiveData.summary === 'string') {
+                  const summaryLines = sensitiveData.summary.split('\n').filter((line: string) => 
+                    line.trim().length > 0 && 
+                    (line.includes('recommend') || line.includes('suggest') || line.includes('should') || line.includes('implement') || line.includes('mask') || line.includes('hash'))
+                  )
+                  summaryLines.forEach((line: string) => {
+                    if (line.trim().length > 10) {
+                      aiRecommendations.push(line.trim())
+                    }
+                  })
+                }
+              } catch (parseError) {
+                console.warn(`[Report] Failed to parse sensitive data for ${result.fileName}:`, parseError)
+              }
+            }
+
+            // Process error flow results collected by backend batch heuristics
+            if (Array.isArray(result.errorFlows) && result.errorFlows.length > 0) {
+              try {
+                result.errorFlows.forEach((flow: any) => {
+                  errorFlows.push({
+                    path: Array.isArray(flow.path) ? flow.path : [],
+                    stackTop: flow.stackTop || (Array.isArray(flow.path) && flow.path.length > 0 ? flow.path[flow.path.length - 1] : 'Unknown')
+                  })
+                })
+              } catch (efParse) {
+                console.warn(`[Report] Failed to process error flows for ${result.fileName}:`, efParse)
+              }
+            }
+          }
+          
+          // Build risk heatmap from logging scores
+          const riskHeatmap = loggingScores.map(score => ({
+            module: score.module,
+            risk: Math.max(0, 100 - score.score)
+          }))
+          
+          // Set the findings data
+          const findingsData = {
+            loggingScores,
+            piiFindings,
+            errorFlows,
+            riskHeatmap
+          }
+          
+          setFindingsData(findingsData)
+          setRiskHeatmapData(riskHeatmap.map((module: any) => ({
+            name: module.module.split("\\").pop() || module.module,
+            score: module.risk,
+          })))
+          setHasDynamicFindings(true)
+          
+          console.log("[Report] Built findings from AI analysis results:", {
+            loggingScores: loggingScores.length,
+            piiFindings: piiFindings.length,
+            errorFlows: errorFlows.length,
+            riskHeatmap: riskHeatmap.length
+          })
+          
+          // Generate dynamic summary from AI results
+          if (loggingScores.length > 0 || piiFindings.length > 0 || aiRecommendations.length > 0) {
+            const avgLoggingScore = loggingScores.length > 0 
+              ? loggingScores.reduce((sum, score) => sum + score.score, 0) / loggingScores.length 
+              : 0
+            
+            const poorLogging = avgLoggingScore < 50
+            const hasPii = piiFindings.length > 0
+            const hasAiRecommendations = aiRecommendations.length > 0
+            
+            let healthStatus = "HEALTHY"
+            if (poorLogging) healthStatus = "NEEDS_ATTENTION"
+            if (hasPii) healthStatus = "NEEDS_ATTENTION"
+            if (hasAiRecommendations) healthStatus = "NEEDS_ATTENTION"
+            
+            // Combine AI-generated recommendations with basic recommendations
+            const combinedRecommendations = [
+              ...aiRecommendations, // AI-generated recommendations from vulnerability analysis
+              ...(poorLogging ? ["Implement structured logging with correlation IDs", "Add error codes and context to log messages"] : []),
+              ...(hasPii ? ["Mask or remove sensitive data from logs", "Implement data classification and handling policies"] : [])
+            ]
+            
+            // Remove duplicates and limit to reasonable number
+            const uniqueRecommendations = [...new Set(combinedRecommendations)].slice(0, 10)
+            
+            const aiSummary = {
+              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} Analyzed ${parsed.results.length} file(s).`,
+              top_risks: [
+                ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
+                ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
+                ...(hasAiRecommendations ? [{ risk: "Security Vulnerabilities", severity: "HIGH", description: `${aiRecommendations.length} AI-identified issues require attention` }] : [])
+              ],
+              recommended_actions: uniqueRecommendations
+            }
+            
+            setSummaryData(aiSummary)
+            setHasDynamicSummary(true)
+            console.log("[Report] Generated AI-based summary from individual file analysis with", aiRecommendations.length, "AI recommendations")
+            console.log("[Report] AI Recommendations:", aiRecommendations)
+            console.log("[Report] Final combined recommendations:", uniqueRecommendations)
+          }
+        }
       } catch (error) {
         console.error("Error parsing AI analysis results:", error)
       }
@@ -215,6 +546,7 @@ export default function DebugReport() {
       console.log("[Report] Skipping remote summary fetch; summaryData already set")
       return
     }
+    // Summary is always allowed; heatmap/summary are always shown regardless of selection
     if (aiZipResults?.summary) {
       setSummaryData(aiZipResults.summary)
       setHasDynamicSummary(true)
@@ -254,11 +586,15 @@ export default function DebugReport() {
         errorFlows: aiZipResults.errorFlows?.length || 0
       });
       
-      const data = { 
-        loggingScores: aiZipResults.loggingScores || [], 
-        piiFindings: aiZipResults.piiFindings || [],
-        errorFlows: aiZipResults.errorFlows || [],
-        riskHeatmap: aiZipResults.riskHeatmap 
+      // Gate findings payload by selected types; riskHeatmap always included
+      const allowLogging = !selectedAnalysisTypes || selectedAnalysisTypes.includes('logging-quality')
+      const allowErrors = !selectedAnalysisTypes || selectedAnalysisTypes.includes('error-flow')
+      const allowSensitive = !selectedAnalysisTypes || selectedAnalysisTypes.includes('sensitive-data')
+      const data = {
+        loggingScores: allowLogging ? (aiZipResults.loggingScores || []) : [],
+        piiFindings: allowSensitive ? (aiZipResults.piiFindings || []) : [],
+        errorFlows: allowErrors ? (aiZipResults.errorFlows || []) : [],
+        riskHeatmap: aiZipResults.riskHeatmap,
       }
       setFindingsData(data)
       const heatmapData = aiZipResults.riskHeatmap.map((module: any) => ({
@@ -286,7 +622,17 @@ export default function DebugReport() {
       .then((data) => {
         if (localId !== findingsReqId.current) return
         if (hasDynamicFindings) return
-        setFindingsData(data)
+        // Gate server-provided findings by selection; heatmap always processed
+        const allowLogging = !selectedAnalysisTypes || selectedAnalysisTypes.includes('logging-quality')
+        const allowErrors = !selectedAnalysisTypes || selectedAnalysisTypes.includes('error-flow')
+        const allowSensitive = !selectedAnalysisTypes || selectedAnalysisTypes.includes('sensitive-data')
+        const gated = {
+          loggingScores: allowLogging ? (data.loggingScores || []) : [],
+          piiFindings: allowSensitive ? (data.piiFindings || []) : [],
+          errorFlows: allowErrors ? (data.errorFlows || []) : [],
+          riskHeatmap: data.riskHeatmap || [],
+        }
+        setFindingsData(gated)
         setRecurringProblems(data.recurringProblems)
         const heatmapData = data.riskHeatmap.map((module: any) => ({
           name: module.module.split("\\").pop() || module.module, // Extract module name
@@ -299,7 +645,7 @@ export default function DebugReport() {
         if (error?.name !== 'AbortError') console.error("Error fetching findings data:", error)
       })
     return () => ctrl.abort()
-  }, [aiZipResults, API_BASE, hasDynamicFindings, hasLocalParsed])
+  }, [aiZipResults, API_BASE, hasDynamicFindings, hasLocalParsed, selectedAnalysisTypes])
 
   return (
     <div className="min-h-screen bg-background">
@@ -321,20 +667,31 @@ export default function DebugReport() {
             {/* <section id="ai-summary">
               <AiSummarySection data={logData} />
             </section> */}
+            {/* Conditionally render sections based on selection; if null (no selection saved), show all */}
             <section id="logging-quality">
-              {findingsData && <LoggingQualitySection data={findingsData} />}
+              {findingsData && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('logging-quality')) && (
+                <LoggingQualitySection data={findingsData} />
+              )}
             </section>
             <section id="error-flows">
-              {findingsData && <ErrorFlowSection data={findingsData} />}
+              {findingsData && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('error-flow')) && (
+                <ErrorFlowSection data={findingsData} />
+              )}
             </section>
             <section id="sensitive-data">
-              {findingsData && <SensitiveDataSection data={findingsData} />}
+              {findingsData && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('sensitive-data')) && (
+                <SensitiveDataSection data={findingsData} />
+              )}
             </section>
             <section id="ai-sensitive-data">
-              {aiAnalysisResults && <AISensitiveDataSection data={aiAnalysisResults} />}
+              {aiAnalysisResults && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('sensitive-data')) && (
+                <AISensitiveDataSection data={aiAnalysisResults} />
+              )}
             </section>
             <section id="ai-vulnerabilities">
-              {aiAnalysisResults && <AIVulnerabilitySection data={aiAnalysisResults} />}
+              {aiAnalysisResults && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('recommendations')) && (
+                <AIVulnerabilitySection data={aiAnalysisResults} />
+              )}
             </section>
             {/* <section id="recurring-bugs">
               <RecurringBugsSection data={logData} />
@@ -343,7 +700,9 @@ export default function DebugReport() {
             {findingsData && <CodeImprovementsSection data={recurringProblems} />}
             </section> */}
             <section id="recommendations">
-             {summaryData && <RecommendationsSection data={summaryData} />}
+             {summaryData && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('recommendations')) && (
+               <RecommendationsSection data={summaryData} />
+             )}
             </section>
           </div>
         </main>

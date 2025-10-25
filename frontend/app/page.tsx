@@ -31,6 +31,7 @@ export default function Home() {
   const [comparisonExtractedFiles, setComparisonExtractedFiles] = useState<ExtractedFile[]>([])
   const [showComparisonZipExplorer, setShowComparisonZipExplorer] = useState(false)
   const [selectedAnalysisTypes, setSelectedAnalysisTypes] = useState<string[]>([])
+  const [includeInAI, setIncludeInAI] = useState<boolean[]>([])
 
   // ZIP handling state
   const [extractedFiles, setExtractedFiles] = useState<ExtractedFile[]>([])
@@ -41,6 +42,7 @@ export default function Home() {
     const regularFiles = newFiles.filter((f) => !f.name.endsWith(".zip"))
 
     setFiles((prev) => [...prev, ...regularFiles])
+    setIncludeInAI((prev) => [...prev, ...regularFiles.map(() => true)])
 
     // Extract ZIPs and show explorer
     if (zipFiles.length > 0) {
@@ -54,12 +56,30 @@ export default function Home() {
 
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index))
+    setIncludeInAI((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleToggleIncludeAI = (index: number) => {
+    setIncludeInAI((prev) => prev.map((v, i) => (i === index ? !v : v)))
   }
 
   const handleAnalyze = async () => {
     if (files.length === 0 && !pastedLogs.trim() && extractedFiles.filter((f) => f.selected).length === 0) return
 
     setIsAnalyzing(true)
+
+    // Clear previous analysis to ensure fresh results
+    try {
+      localStorage.removeItem("debugReportData")
+      localStorage.removeItem("aiAnalysisResults")
+      localStorage.removeItem("aiZipResults")
+      console.log("[Analysis] Cleared previous analysis data - generating fresh results")
+    } catch {}
+
+    // Persist user's selected analysis types so the report page can render conditionally
+    try {
+      localStorage.setItem("selectedAnalysisTypes", JSON.stringify(selectedAnalysisTypes))
+    } catch {}
 
     let parsedData: ParsedLogData | null = null
     let aiAnalysisResults: any = null
@@ -69,21 +89,25 @@ export default function Home() {
       if (pastedLogs.trim()) {
         parsedData = parseLogFile(pastedLogs)
 
-        try {
-          const response = await fetch(`${API_BASE}/api/analyze/file`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: pastedLogs,
-              fileName: "pasted-logs.txt",
-              fileType: "log",
-            }),
-          })
-          if (response.ok) {
-            aiAnalysisResults = await response.json()
+        // Only send AI request for logs if relevant analysis types were chosen
+        if (selectedAnalysisTypes.length > 0) {
+          try {
+            const response = await fetch(`${API_BASE}/api/analyze/file`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                content: pastedLogs,
+                fileName: "pasted-logs.txt",
+                fileType: "log",
+                selectedTypes: selectedAnalysisTypes,
+              }),
+            })
+            if (response.ok) {
+              aiAnalysisResults = await response.json()
+            }
+          } catch (err) {
+            console.warn("AI analysis failed for pasted logs:", err)
           }
-        } catch (err) {
-          console.warn("AI analysis failed for pasted logs:", err)
         }
 
         localStorage.setItem("debugReportData", JSON.stringify(parsedData))
@@ -95,31 +119,82 @@ export default function Home() {
       // 🧠 Case 2: extracted files from ZIP (selected ones)
       const selectedExtracted = extractedFiles.filter((f) => f.selected && f.content)
       if (selectedExtracted.length > 0) {
-        const combinedLogs = selectedExtracted
+        // Handle log files
+        const selectedLogs = selectedExtracted
           .filter((f) => f.path.endsWith(".log") || f.path.endsWith(".txt"))
-          .map((f) => f.content)
-          .join("\n")
+        
+        if (selectedLogs.length > 0) {
+          const combinedLogs = selectedLogs
+            .map((f) => f.content)
+            .join("\n")
 
-        if (combinedLogs) {
           parsedData = parseLogFile(combinedLogs)
           localStorage.setItem("debugReportData", JSON.stringify(parsedData))
 
+          if (selectedAnalysisTypes.length > 0) {
+            try {
+              const response = await fetch(`${API_BASE}/api/analyze/file`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  content: combinedLogs,
+                  fileName: "combined-logs.txt",
+                  fileType: "log",
+                  selectedTypes: selectedAnalysisTypes,
+                }),
+              })
+              if (response.ok) {
+                aiAnalysisResults = await response.json()
+                localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+              }
+            } catch (err) {
+              console.warn("AI analysis failed for ZIP logs:", err)
+            }
+          }
+        }
+
+        // Handle code files - NEW: Send selected code files to AI
+        const selectedCodeFiles = selectedExtracted
+          .filter((f) => 
+            /\.(js|ts|tsx|py|java|go|rb|php|cs|json|md)$/i.test(f.path)
+          )
+          .map((f) => ({
+            fileName: f.path.split("/").pop() || f.path,
+            fileType: (f.path.split(".").pop() || "unknown").toLowerCase(),
+            content: f.content as string,
+          }))
+
+        if (selectedAnalysisTypes.length > 0 && selectedCodeFiles.length > 0) {
           try {
-            const response = await fetch(`${API_BASE}/api/analyze/file`, {
+            console.log(`[ZIP] Sending ${selectedCodeFiles.length} selected code files to AI:`, 
+              selectedCodeFiles.map(f => f.fileName))
+            
+            const response = await fetch(`${API_BASE}/api/analyze/batch`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                content: combinedLogs,
-                fileName: "combined-logs.txt",
-                fileType: "log",
+              body: JSON.stringify({ 
+                files: selectedCodeFiles, 
+                selectedTypes: selectedAnalysisTypes 
               }),
             })
+            
             if (response.ok) {
-              aiAnalysisResults = await response.json()
+              const aiZipCodeResults = await response.json()
+              console.log("[ZIP] AI analysis completed for selected code files:", aiZipCodeResults)
+              
+              // Merge with existing AI results if any
+              if (aiAnalysisResults) {
+                aiAnalysisResults = {
+                  ...aiAnalysisResults,
+                  zipCodeAnalysis: aiZipCodeResults
+                }
+              } else {
+                aiAnalysisResults = aiZipCodeResults
+              }
               localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
             }
           } catch (err) {
-            console.warn("AI analysis failed for ZIP logs:", err)
+            console.warn("AI analysis failed for selected ZIP code files:", err)
           }
         }
       }
@@ -140,47 +215,56 @@ export default function Home() {
           }
         }
 
-        const validFiles = filesToAnalyze.filter((f): f is { fileName: string; fileType: string; content: string } => f.content !== null)
+        const validFilesAll = filesToAnalyze.filter((f): f is { fileName: string; fileType: string; content: string } => f.content !== null)
+        // Filter files sent to AI by includeInAI toggles
+        const validFiles = validFilesAll.filter((_, i) => includeInAI[i] !== false)
 
-        if (validFiles.length > 0) {
-          const logFiles = validFiles.filter((f) => f.fileType === "log" || f.fileType === "txt")
+        if (validFilesAll.length > 0) {
+          const logFiles = validFilesAll.filter((f) => f.fileType === "log" || f.fileType === "txt")
           if (logFiles.length > 0) {
-            parsedData = parseLogFile(logFiles[0].content)
-            localStorage.setItem("debugReportData", JSON.stringify(parsedData))
+            const combined = logFiles.map((f) => f.content).join("\n")
+            if (combined.trim()) {
+              parsedData = parseLogFile(combined)
+              localStorage.setItem("debugReportData", JSON.stringify(parsedData))
+            }
           }
 
-          try {
-            const response = await fetch(`${API_BASE}/api/analyze/batch`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ files: validFiles }),
-            })
-            if (response.ok) {
-              aiAnalysisResults = await response.json()
-              localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+          if (selectedAnalysisTypes.length > 0 && validFiles.length > 0) {
+            try {
+              const response = await fetch(`${API_BASE}/api/analyze/batch`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ files: validFiles, selectedTypes: selectedAnalysisTypes }),
+              })
+              if (response.ok) {
+                aiAnalysisResults = await response.json()
+                localStorage.setItem("aiAnalysisResults", JSON.stringify(aiAnalysisResults))
+              }
+            } catch (aiError) {
+              console.warn("AI analysis failed on batch:", aiError)
             }
-          } catch (aiError) {
-            console.warn("AI analysis failed on batch:", aiError)
           }
         }
 
         // Extra ZIP-level AI endpoint for uploaded ZIPs
         const zip = files.find((f) => f.name.toLowerCase().endsWith(".zip"))
         if (zip) {
-          try {
-            const buf = await zip.arrayBuffer()
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
-            const response = await fetch(`${API_BASE}/api/analyze/zip`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ zipBase64: base64 }),
-            })
-            if (response.ok) {
-              const zipResults = await response.json()
-              localStorage.setItem("aiZipResults", JSON.stringify(zipResults))
+          if (selectedAnalysisTypes.length > 0) {
+            try {
+              const buf = await zip.arrayBuffer()
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)))
+              const response = await fetch(`${API_BASE}/api/analyze/zip`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ zipBase64: base64, selectedTypes: selectedAnalysisTypes }),
+              })
+              if (response.ok) {
+                const zipResults = await response.json()
+                localStorage.setItem("aiZipResults", JSON.stringify(zipResults))
+              }
+            } catch (e) {
+              console.warn("Zip analysis failed:", e)
             }
-          } catch (e) {
-            console.warn("Zip analysis failed:", e)
           }
         }
       }
@@ -323,7 +407,12 @@ export default function Home() {
 
           {/* Uploaded Files */}
           {files.length > 0 && (
-            <UploadedFilesList files={files} onRemoveFile={handleRemoveFile} />
+            <UploadedFilesList 
+              files={files} 
+              onRemoveFile={handleRemoveFile}
+              includeInAI={includeInAI}
+              onToggleIncludeAI={handleToggleIncludeAI}
+            />
           )}
 
           {/* ZIP Explorer */}

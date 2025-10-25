@@ -79,11 +79,18 @@ app.post('/api/ai/analyze', async (req, res) => {
 // Enhanced file analysis endpoint
 app.post('/api/analyze/file', async (req, res) => {
   try {
-    const { content, fileName, fileType } = req.body;
+    const { content, fileName, fileType, selectedTypes } = req.body;
     
     if (!content) {
       return res.status(400).json({ error: 'No content provided' });
     }
+
+    console.log('[FILE] Analysis request:', {
+      fileName,
+      fileType,
+      selectedTypes: selectedTypes || [],
+      contentLength: content.length
+    });
 
     const { performAnalysis } = require('./tools/ai-analyzer/analyzer');
     const results = {};
@@ -91,22 +98,36 @@ app.post('/api/analyze/file', async (req, res) => {
     // Determine file type if not provided
     const detectedType = fileType || fileName?.split('.').pop() || 'unknown';
 
-    // Perform multiple analyses based on file type
+    // Perform analyses based on file type and selected types
     if (detectedType === 'log' || content.includes('ERROR') || content.includes('INFO')) {
-      // Log file - analyze for sensitive data and error patterns
-      results.sensitiveData = await performAnalysis(content, 'sensitive_data');
+      // Log file - analyze for sensitive data and error patterns if selected
+      if (!selectedTypes || selectedTypes.includes('sensitive-data')) {
+        console.log(`[FILE] Running sensitive data analysis for ${fileName}`);
+        results.sensitiveData = await performAnalysis(content, 'sensitive_data');
+      }
     }
 
     if (['js', 'ts', 'py', 'java', 'cpp', 'c', 'cs', 'rb', 'go', 'php'].includes(detectedType)) {
-      // Code file - analyze for vulnerabilities and quality
-      results.vulnerabilities = await performAnalysis({ content, fileType: detectedType }, 'vulnerabilities');
-      results.codeQuality = await performAnalysis({ content, fileType: detectedType }, 'code_quality');
+      // Code file - analyze for vulnerabilities if selected
+      if (!selectedTypes || selectedTypes.includes('recommendations')) {
+        console.log(`[FILE] Running vulnerability analysis for ${fileName}`);
+        results.vulnerabilities = await performAnalysis({ content, fileType: detectedType }, 'vulnerabilities');
+      }
+      
+      // Code file - analyze for code quality if logging-quality is selected
+      if (!selectedTypes || selectedTypes.includes('logging-quality')) {
+        console.log(`[FILE] Running code quality analysis for ${fileName}`);
+        results.codeQuality = await performAnalysis({ content, fileType: detectedType }, 'code_quality');
+      }
     }
+
+    console.log('[FILE] Analysis completed for', fileName, 'with results:', Object.keys(results));
 
     res.json({
       fileName,
       fileType: detectedType,
       analysis: results,
+      selectedTypes: selectedTypes || [],
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -118,11 +139,17 @@ app.post('/api/analyze/file', async (req, res) => {
 // Batch analysis endpoint for multiple files
 app.post('/api/analyze/batch', async (req, res) => {
   try {
-    const { files } = req.body;
+    const { files, selectedTypes } = req.body;
     
     if (!files || !Array.isArray(files)) {
       return res.status(400).json({ error: 'Files array required' });
     }
+
+    console.log('[BATCH] Analysis request:', {
+      fileCount: files.length,
+      selectedTypes: selectedTypes || [],
+      files: files.map(f => ({ fileName: f.fileName, fileType: f.fileType }))
+    });
 
     const { performAnalysis } = require('./tools/ai-analyzer/analyzer');
     const results = [];
@@ -132,13 +159,94 @@ app.post('/api/analyze/batch', async (req, res) => {
         const fileResults = { fileName: file.fileName, fileType: file.fileType };
         
         if (file.content) {
-          if (file.fileType === 'log' || file.content.includes('ERROR')) {
+          // Only run sensitive data analysis if selected
+          if ((file.fileType === 'log' || file.content.includes('ERROR')) && 
+              (!selectedTypes || selectedTypes.includes('sensitive-data'))) {
+            console.log(`[BATCH] Running sensitive data analysis for ${file.fileName}`);
             fileResults.sensitiveData = await performAnalysis(file.content, 'sensitive_data');
           }
           
+          // Only run code analysis if selected and file is code
           if (['js', 'ts', 'py', 'java', 'cpp', 'c'].includes(file.fileType)) {
-            fileResults.vulnerabilities = await performAnalysis({ content: file.content, fileType: file.fileType }, 'vulnerabilities');
-            fileResults.codeQuality = await performAnalysis({ content: file.content, fileType: file.fileType }, 'code_quality');
+            // Run vulnerability analysis if selected
+            if (!selectedTypes || selectedTypes.includes('recommendations')) {
+              console.log(`[BATCH] Running vulnerability analysis for ${file.fileName}`);
+              fileResults.vulnerabilities = await performAnalysis({ content: file.content, fileType: file.fileType }, 'vulnerabilities');
+            }
+            
+            // Run code quality analysis if logging-quality is selected
+            if (!selectedTypes || selectedTypes.includes('logging-quality')) {
+              console.log(`[BATCH] Running code quality analysis for ${file.fileName}`);
+              fileResults.codeQuality = await performAnalysis({ content: file.content, fileType: file.fileType }, 'code_quality');
+            }
+
+            // Derive error flows from code if error-flow selected
+            if (!selectedTypes || selectedTypes.includes('error-flow')) {
+              console.log(`[BATCH] Deriving error flows for code file ${file.fileName}`);
+              try {
+                const lines = file.content.split(/\r?\n/);
+                const flows = [];
+                const warnRx = /\b(console\.warn|logWarn|logger\.warn)\b/i;
+                const errorRx = /\b(throw\s+new|console\.error|logError|logger\.error)\b/i;
+                const infoRx = /\b(console\.log|logger\.info)\b/i;
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i];
+                  if (warnRx.test(line)) {
+                    const path = [line.trim()];
+                    let stackTop = '';
+                    for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {
+                      const ln = lines[j];
+                      if (errorRx.test(ln)) {
+                        path.push(ln.trim());
+                        if (!stackTop) stackTop = ln.trim();
+                      } else if (infoRx.test(ln)) {
+                        break;
+                      }
+                    }
+                    if (path.length > 1) flows.push({ path, stackTop: stackTop || path[path.length - 1] });
+                  }
+                }
+                if (flows.length === 0) {
+                  for (let i = 0; i < lines.length; i++) {
+                    if (/\bthrow\s+new\b/i.test(lines[i])) {
+                      flows.push({ path: [lines[i].trim()], stackTop: lines[i].trim() });
+                    }
+                  }
+                }
+                if (flows.length > 0) fileResults.errorFlows = flows;
+              } catch (efErr) {
+                console.warn(`[BATCH] Failed to derive error flows for ${file.fileName}:`, efErr.message);
+              }
+            }
+          }
+
+          // Derive error flows from logs if error-flow selected
+          if ((!selectedTypes || selectedTypes.includes('error-flow')) && (file.fileType === 'log' || file.fileType === 'txt')) {
+            console.log(`[BATCH] Deriving error flows for log file ${file.fileName}`);
+            try {
+              const lines = file.content.split(/\r?\n/).filter(Boolean);
+              const flows = [];
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (/\bWARN\b/i.test(line)) {
+                  const path = [line.replace(/^\s+/, '')];
+                  let stackTop = '';
+                  for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+                    const ln = lines[j];
+                    if (/\b(ERROR|FATAL)\b/i.test(ln)) {
+                      path.push(ln.replace(/^\s+/, ''));
+                      if (!stackTop) stackTop = ln;
+                    } else if (/\bINFO\b/i.test(ln)) {
+                      break;
+                    }
+                  }
+                  if (path.length > 1) flows.push({ path, stackTop: stackTop || path[path.length - 1] });
+                }
+              }
+              if (flows.length > 0) fileResults.errorFlows = (fileResults.errorFlows || []).concat(flows);
+            } catch (efLogErr) {
+              console.warn(`[BATCH] Failed to derive error flows for ${file.fileName}:`, efLogErr.message);
+            }
           }
         }
         
@@ -149,10 +257,16 @@ app.post('/api/analyze/batch', async (req, res) => {
       }
     }
 
+    console.log('[BATCH] Analysis completed:', {
+      totalFiles: files.length,
+      successfulAnalyses: results.filter(r => !r.error).length
+    });
+
     res.json({
       results,
       totalFiles: files.length,
       successfulAnalyses: results.filter(r => !r.error).length,
+      selectedTypes: selectedTypes || [],
       timestamp: new Date().toISOString()
     });
   } catch (error) {

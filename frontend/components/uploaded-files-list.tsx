@@ -3,13 +3,16 @@
 import { FileText, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface UploadedFilesListProps {
   files: File[]
   onRemoveFile: (index: number) => void
+  includeInAI?: boolean[]
+  onToggleIncludeAI?: (index: number) => void
 }
 
-export function UploadedFilesList({ files, onRemoveFile }: UploadedFilesListProps) {
+export function UploadedFilesList({ files, onRemoveFile, includeInAI, onToggleIncludeAI }: UploadedFilesListProps) {
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
@@ -37,6 +40,15 @@ export function UploadedFilesList({ files, onRemoveFile }: UploadedFilesListProp
                 <p className="font-medium truncate">{file.name}</p>
                 <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
               </div>
+            {includeInAI && onToggleIncludeAI && (
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Checkbox
+                  checked={includeInAI[index] ?? true}
+                  onCheckedChange={() => onToggleIncludeAI(index)}
+                />
+                Include in AI scan
+              </label>
+            )}
               <Button variant="ghost" size="icon" onClick={() => onRemoveFile(index)} className="shrink-0">
                 <X className="size-4" />
                 <span className="sr-only">Remove file</span>
