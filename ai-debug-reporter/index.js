@@ -99,10 +99,13 @@ app.post('/api/analyze/file', async (req, res) => {
     const detectedType = fileType || fileName?.split('.').pop() || 'unknown';
 
     // Perform analyses based on file type and selected types
-    if (detectedType === 'log' || content.includes('ERROR') || content.includes('INFO')) {
-      // Log file - analyze for sensitive data and error patterns if selected
+    const isLogFile = detectedType === 'log' || content.includes('ERROR') || content.includes('INFO');
+    const hasLoggingCode = content.includes('console.log') || content.includes('logInfo') || content.includes('logError') || content.includes('logger');
+    
+    if (isLogFile || hasLoggingCode) {
+      // Log file or code with logging - analyze for sensitive data if selected
       if (!selectedTypes || selectedTypes.includes('sensitive-data')) {
-        console.log(`[FILE] Running sensitive data analysis for ${fileName}`);
+        console.log(`[FILE] Running sensitive data analysis for ${fileName} (${isLogFile ? 'log file' : 'code with logging'})`);
         results.sensitiveData = await performAnalysis(content, 'sensitive_data');
       }
     }
@@ -160,9 +163,13 @@ app.post('/api/analyze/batch', async (req, res) => {
         
         if (file.content) {
           // Only run sensitive data analysis if selected
-          if ((file.fileType === 'log' || file.content.includes('ERROR')) && 
+          // Run for log files, or code files that contain logging functions
+          const isLogFile = file.fileType === 'log' || file.content.includes('ERROR') || file.content.includes('INFO');
+          const hasLoggingCode = file.content.includes('console.log') || file.content.includes('logInfo') || file.content.includes('logError') || file.content.includes('logger');
+          
+          if ((isLogFile || hasLoggingCode) && 
               (!selectedTypes || selectedTypes.includes('sensitive-data'))) {
-            console.log(`[BATCH] Running sensitive data analysis for ${file.fileName}`);
+            console.log(`[BATCH] Running sensitive data analysis for ${file.fileName} (${isLogFile ? 'log file' : 'code with logging'})`);
             fileResults.sensitiveData = await performAnalysis(file.content, 'sensitive_data');
           }
           

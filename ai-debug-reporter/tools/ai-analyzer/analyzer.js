@@ -88,27 +88,32 @@ async function chat(system, user) {
 // 1. AI-Powered Log Analysis (Sensitive Data + Error Patterns)
 async function analyzeSensitiveData(logContent) {
   const system = `You are a security expert and log analyst specializing in data privacy and system monitoring.
-Analyze log content for:
+Analyze content for sensitive data exposure in both log files and code files:
 
 1. SENSITIVE DATA DETECTION:
 - Personal Identifiable Information (PII): names, emails, phone numbers, addresses
 - Financial data: credit cards, bank accounts, transaction IDs
-- Authentication data: passwords, tokens, API keys, session IDs
+- Authentication data: passwords, tokens, API keys, session IDs, hardcoded credentials
 - Medical data: patient IDs, medical records, health information
 - Business data: internal IDs, proprietary information
+- Code-specific sensitive data: hardcoded error codes, internal system identifiers, debug information
+- Logging exposure: sensitive data being logged, error messages revealing system internals
 
 2. ERROR PATTERN ANALYSIS:
 - Count total log entries, errors, warnings, fatal errors
 - Identify error flow patterns (WARN -> ERROR -> FATAL sequences)
 - Detect error cascades and system failures
 - Analyze error correlation and timing
+- Code error handling: hardcoded error codes, error message exposure
 
 3. SYSTEM HEALTH ASSESSMENT:
 - Calculate error rates and system stability
 - Identify critical issues and failure points
 - Assess logging quality and completeness
+- Code security: hardcoded values, error exposure, logging practices
 
 Consider context - distinguish between real data and placeholders/test data.
+For code files, focus on hardcoded values, error codes, and logging practices that could expose sensitive information.
 Return JSON with: {
   detections: [{type, value, confidence, context, suggestion}],
   error_analysis: {
@@ -123,7 +128,7 @@ Return JSON with: {
   summary: "Overall system health and security assessment"
 }`
   
-  const user = `Analyze this log content comprehensively:\n${logContent}`;
+  const user = `Analyze this content comprehensively for sensitive data exposure:\n${logContent}`;
   return await chat(system, user);
 }
 

@@ -225,7 +225,18 @@ export default function DebugReport() {
               if (vulnData.vulnerabilities && Array.isArray(vulnData.vulnerabilities)) {
                 vulnData.vulnerabilities.forEach((vuln: any) => {
                   if (vuln.fix && typeof vuln.fix === 'string') {
-                    aiRecommendations.push(vuln.fix)
+                    // Check if the fix contains code (looks like actual code)
+                    if (vuln.fix.includes('function') || vuln.fix.includes('const') || vuln.fix.includes('async') || vuln.fix.includes('require') || vuln.fix.includes('{') && vuln.fix.includes('}')) {
+                      // This looks like code, create a code fix
+                      codeFixes.push({
+                        title: `Fix for ${vuln.type || 'Security Issue'}`,
+                        code: vuln.fix,
+                        description: vuln.description || 'AI-generated code fix for security vulnerability'
+                      })
+                    } else {
+                      // This is a text recommendation
+                      aiRecommendations.push(vuln.fix)
+                    }
                   }
                 })
               }
@@ -278,11 +289,22 @@ export default function DebugReport() {
                   fullVulnerabilityData: vulnerabilityData
                 })
                 
-                // Extract AI-generated recommendations from vulnerability analysis
+                // Extract AI-generated recommendations and code fixes from vulnerability analysis
                 if (vulnerabilityData?.vulnerabilities && Array.isArray(vulnerabilityData.vulnerabilities)) {
                   vulnerabilityData.vulnerabilities.forEach((vuln: any) => {
                     if (vuln.fix && typeof vuln.fix === 'string') {
-                      aiRecommendations.push(vuln.fix)
+                      // Check if the fix contains code (looks like actual code)
+                      if (vuln.fix.includes('function') || vuln.fix.includes('const') || vuln.fix.includes('async') || vuln.fix.includes('require') || vuln.fix.includes('{') && vuln.fix.includes('}')) {
+                        // This looks like code, create a code fix
+                        codeFixes.push({
+                          title: `Fix for ${vuln.type || 'Security Issue'}`,
+                          code: vuln.fix,
+                          description: vuln.description || 'AI-generated code fix for security vulnerability'
+                        })
+                      } else {
+                        // This is a text recommendation
+                        aiRecommendations.push(vuln.fix)
+                      }
                     }
                   })
                 }
