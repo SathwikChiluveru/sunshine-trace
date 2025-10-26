@@ -11,9 +11,9 @@ const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen2.5-vl-32b-in
 const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
 const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';
 
-/*const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
+const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
 const DEVNET_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
-const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';*/
+const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';
 
 const PROVIDER     = OR_ENABLED ? 'openrouter' : 'devnet';
 const API_BASE     = OR_ENABLED ? OR_BASE : DEVNET_BASE;
@@ -234,49 +234,234 @@ Return JSON with: {architecture_score, security_score, quality_score, technical_
   return await chat(system, user);
 }
 
+// Helper function to normalize AI responses for different providers
+function normalizeAIResponse(response, analysisType) {
+  try {
+    let parsedResponse;
+    
+    // Try to parse the response if it's a string
+    if (typeof response === 'string') {
+      // Clean up response - remove markdown code blocks if present
+      let cleanResponse = response;
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      try {
+        parsedResponse = JSON.parse(cleanResponse);
+      } catch (parseError) {
+        console.warn(`[AI] Failed to parse response as JSON:`, parseError.message);
+        return { error: `Failed to parse AI response: ${parseError.message}` };
+      }
+    } else {
+      parsedResponse = response;
+    }
+    
+    // Normalize based on analysis type and provider
+    switch (analysisType) {
+      case 'sensitive_data':
+        return normalizeSensitiveDataResponse(parsedResponse);
+        
+      case 'vulnerabilities':
+        return normalizeVulnerabilityResponse(parsedResponse);
+        
+      case 'code_quality':
+        return normalizeCodeQualityResponse(parsedResponse);
+        
+      case 'risk_assessment':
+        return normalizeRiskAssessmentResponse(parsedResponse);
+        
+      case 'error_flow':
+        return normalizeErrorFlowResponse(parsedResponse);
+        
+      case 'codebase':
+        return normalizeCodebaseResponse(parsedResponse);
+        
+      default:
+        return parsedResponse;
+    }
+  } catch (error) {
+    console.error(`[AI] Error normalizing response:`, error);
+    return { error: error.message };
+  }
+}
+
+// Normalize sensitive data responses
+function normalizeSensitiveDataResponse(response) {
+  // Handle both devnet and openrouter formats
+  if (response.detections && Array.isArray(response.detections)) {
+    // Already in correct format
+    return response;
+  }
+  
+  // If response has different structure, try to extract detections
+  if (response.sensitive_data && Array.isArray(response.sensitive_data)) {
+    return {
+      detections: response.sensitive_data,
+      summary: response.summary || "Sensitive data analysis completed"
+    };
+  }
+  
+  // Fallback: create basic structure
+  return {
+    detections: [],
+    summary: response.summary || "No sensitive data detected",
+    error_analysis: response.error_analysis || {},
+    error_flows: response.error_flows || []
+  };
+}
+
+// Normalize vulnerability responses
+function normalizeVulnerabilityResponse(response) {
+  // Handle both devnet and openrouter formats
+  if (response.vulnerabilities && Array.isArray(response.vulnerabilities)) {
+    // Ensure each vulnerability has required fields
+    const normalizedVulns = response.vulnerabilities.map(vuln => ({
+      type: vuln.type || 'Unknown',
+      severity: vuln.severity || 'medium',
+      description: vuln.description || 'No description available',
+      location: vuln.location || 'Unknown location',
+      fix: vuln.fix || 'No fix suggestion available'
+    }));
+    
+    return {
+      vulnerabilities: normalizedVulns,
+      risk_score: response.risk_score || response.riskScore || 0,
+      summary: response.summary || "Vulnerability analysis completed"
+    };
+  }
+  
+  // Fallback: create basic structure
+  return {
+    vulnerabilities: [],
+    risk_score: 0,
+    summary: response.summary || "No vulnerabilities detected"
+  };
+}
+
+// Normalize code quality responses
+function normalizeCodeQualityResponse(response) {
+  // Handle both devnet and openrouter formats
+  if (response.quality_score !== undefined || response.qualityScore !== undefined) {
+    const normalizedMetrics = {
+      complexity: response.metrics?.complexity || 0,
+      maintainability: response.metrics?.maintainability || 0,
+      performance: response.metrics?.performance || 0,
+      documentation: response.metrics?.documentation || 0,
+      logging: response.metrics?.logging || 0
+    };
+    
+    return {
+      quality_score: response.quality_score || response.qualityScore || 0,
+      metrics: normalizedMetrics,
+      issues: response.issues || [],
+      recommendations: response.recommendations || []
+    };
+  }
+  
+  // Fallback: create basic structure
+  return {
+    quality_score: 0,
+    metrics: { complexity: 0, maintainability: 0, performance: 0, documentation: 0, logging: 0 },
+    issues: [],
+    recommendations: []
+  };
+}
+
+// Normalize risk assessment responses
+function normalizeRiskAssessmentResponse(response) {
+  return {
+    risk_score: response.risk_score || response.riskScore || 0,
+    factors: response.factors || [],
+    mitigation_strategies: response.mitigation_strategies || response.mitigationStrategies || [],
+    priority_level: response.priority_level || response.priorityLevel || 'medium'
+  };
+}
+
+// Normalize error flow responses
+function normalizeErrorFlowResponse(response) {
+  return {
+    root_cause: response.root_cause || response.rootCause || 'Unknown',
+    flow_pattern: response.flow_pattern || response.flowPattern || 'Unknown pattern',
+    cascade_analysis: response.cascade_analysis || response.cascadeAnalysis || 'No cascade analysis available',
+    prevention_strategies: response.prevention_strategies || response.preventionStrategies || [],
+    monitoring_points: response.monitoring_points || response.monitoringPoints || [],
+    business_impact: response.business_impact || response.businessImpact || 'Unknown impact'
+  };
+}
+
+// Normalize codebase responses
+function normalizeCodebaseResponse(response) {
+  return {
+    architecture_score: response.architecture_score || response.architectureScore || 0,
+    security_score: response.security_score || response.securityScore || 0,
+    quality_score: response.quality_score || response.qualityScore || 0,
+    technical_debt: response.technical_debt || response.technicalDebt || 'Unknown',
+    recommendations: response.recommendations || [],
+    compliance_status: response.compliance_status || response.complianceStatus || 'Unknown'
+  };
+}
+
 // Main analysis function
 async function performAnalysis(inputData, analysisType) {
   console.log(`[AI] ===== PERFORMING ${analysisType.toUpperCase()} ANALYSIS =====`);
   
   try {
+    let rawResponse;
+    
     switch (analysisType) {
       case 'sensitive_data':
         console.log('[AI] Input data type:', typeof inputData);
         console.log('[AI] Input data length:', inputData.length, 'characters');
         console.log('[AI] Input data preview:', inputData.substring(0, 500) + '...');
-        return await analyzeSensitiveData(inputData);
+        rawResponse = await analyzeSensitiveData(inputData);
+        break;
         
       case 'vulnerabilities':
         console.log('[AI] Analyzing file:', inputData.fileName || 'unknown');
         console.log('[AI] File type:', inputData.fileType || 'unknown');
         console.log('[AI] Content length:', inputData.content.length, 'characters');
         console.log('[AI] Content preview:', inputData.content.substring(0, 300) + '...');
-        return await analyzeVulnerabilities(inputData.content, inputData.fileType);
+        rawResponse = await analyzeVulnerabilities(inputData.content, inputData.fileType);
+        break;
         
       case 'code_quality':
         console.log('[AI] Analyzing file:', inputData.fileName || 'unknown');
         console.log('[AI] File type:', inputData.fileType || 'unknown');
         console.log('[AI] Content length:', inputData.content.length, 'characters');
         console.log('[AI] Content preview:', inputData.content.substring(0, 300) + '...');
-        return await analyzeCodeQuality(inputData.content, inputData.fileType);
+        rawResponse = await analyzeCodeQuality(inputData.content, inputData.fileType);
+        break;
         
       case 'risk_assessment':
         console.log('[AI] Risk assessment input:', JSON.stringify(inputData, null, 2));
-        return await analyzeRisk(inputData);
+        rawResponse = await analyzeRisk(inputData);
+        break;
         
       case 'error_flow':
         console.log('[AI] Error flow input:', JSON.stringify(inputData, null, 2));
-        return await analyzeErrorFlow(inputData);
+        rawResponse = await analyzeErrorFlow(inputData);
+        break;
         
       case 'codebase':
         console.log('[AI] Codebase analysis - Number of files:', inputData.files?.length || 0);
         console.log('[AI] Files being analyzed:', inputData.files?.map(f => f.fileName).join(', ') || 'none');
         console.log('[AI] Codebase data preview:', JSON.stringify(inputData, null, 2).substring(0, 1000) + '...');
-        return await analyzeCodebase(inputData);
+        rawResponse = await analyzeCodebase(inputData);
+        break;
         
       default:
         throw new Error(`Unknown analysis type: ${analysisType}`);
     }
+    
+    // Normalize the response for consistent frontend consumption
+    const normalizedResponse = normalizeAIResponse(rawResponse, analysisType);
+    console.log(`[AI] ===== NORMALIZED ${analysisType.toUpperCase()} RESPONSE =====`);
+    console.log(`[AI] Normalized response:`, JSON.stringify(normalizedResponse, null, 2));
+    
+    return normalizedResponse;
   } catch (error) {
     console.error(`[AI] ===== ${analysisType.toUpperCase()} ANALYSIS FAILED =====`);
     console.error(`[AI] Error:`, error.message);

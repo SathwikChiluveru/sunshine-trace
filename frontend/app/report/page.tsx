@@ -215,13 +215,61 @@ export default function DebugReport() {
           const aiRecommendations: string[] = []
           const codeFixes: Array<{title: string, code: string, description: string}> = []
           
+          // Also process the main analysis results if they exist
+          if (parsed.analysis) {
+            console.log("[Report] Processing main analysis results:", Object.keys(parsed.analysis))
+            
+            // Process vulnerabilities from main analysis
+            if (parsed.analysis.vulnerabilities && !parsed.analysis.vulnerabilities.error) {
+              const vulnData = parsed.analysis.vulnerabilities
+              if (vulnData.vulnerabilities && Array.isArray(vulnData.vulnerabilities)) {
+                vulnData.vulnerabilities.forEach((vuln: any) => {
+                  if (vuln.fix && typeof vuln.fix === 'string') {
+                    aiRecommendations.push(vuln.fix)
+                  }
+                })
+              }
+            }
+            
+            // Process code quality from main analysis
+            if (parsed.analysis.codeQuality && !parsed.analysis.codeQuality.error) {
+              const qualityData = parsed.analysis.codeQuality
+              if (qualityData.metrics?.logging !== undefined) {
+                loggingScores.push({
+                  module: 'main-analysis',
+                  score: qualityData.metrics.logging,
+                  gaps: qualityData.issues?.filter((issue: any) => 
+                    issue.type?.toLowerCase().includes('log') || 
+                    issue.description?.toLowerCase().includes('log')
+                  ).map((issue: any) => issue.description) || []
+                })
+              }
+            }
+            
+            // Process sensitive data from main analysis
+            if (parsed.analysis.sensitiveData && !parsed.analysis.sensitiveData.error) {
+              const sensitiveData = parsed.analysis.sensitiveData
+              if (sensitiveData.detections && Array.isArray(sensitiveData.detections)) {
+                sensitiveData.detections.forEach((detection: any) => {
+                  piiFindings.push({
+                    type: detection.type || 'UNKNOWN',
+                    file: 'main-analysis',
+                    line: 0,
+                    sample: detection.value || 'detected',
+                    action: detection.suggestion || 'mask/hash',
+                    confidence: detection.confidence || 0.8
+                  })
+                })
+              }
+            }
+          }
+          
           for (const result of parsed.results) {
             // Process vulnerability analysis results for AI recommendations
             if (result.vulnerabilities && !result.vulnerabilities.error) {
               try {
-                const vulnerabilityData = typeof result.vulnerabilities === 'string'
-                  ? extractJsonBlock(result.vulnerabilities)
-                  : result.vulnerabilities
+                // The backend now normalizes responses, so we can use them directly
+                const vulnerabilityData = result.vulnerabilities
                 
                 console.log(`[Report] Processing vulnerabilities for ${result.fileName}:`, {
                   hasVulnerabilityData: !!vulnerabilityData,
@@ -393,9 +441,8 @@ export default function DebugReport() {
             // Process code quality results for logging scores
             if (result.codeQuality && !result.codeQuality.error) {
               try {
-                const qualityData = typeof result.codeQuality === 'string' 
-                  ? extractJsonBlock(result.codeQuality) 
-                  : result.codeQuality
+                // The backend now normalizes responses, so we can use them directly
+                const qualityData = result.codeQuality
                 
                 console.log(`[Report] Processing code quality for ${result.fileName}:`, {
                   hasQualityData: !!qualityData,
@@ -445,9 +492,8 @@ export default function DebugReport() {
             // Process sensitive data results
             if (result.sensitiveData && !result.sensitiveData.error) {
               try {
-                const sensitiveData = typeof result.sensitiveData === 'string'
-                  ? extractJsonBlock(result.sensitiveData)
-                  : result.sensitiveData
+                // The backend now normalizes responses, so we can use them directly
+                const sensitiveData = result.sensitiveData
                 
                 if (sensitiveData.detections && Array.isArray(sensitiveData.detections)) {
                   sensitiveData.detections.forEach((detection: any) => {
