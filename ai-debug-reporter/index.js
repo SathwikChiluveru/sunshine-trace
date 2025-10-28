@@ -99,10 +99,13 @@ app.post('/api/analyze/file', async (req, res) => {
     const detectedType = fileType || fileName?.split('.').pop() || 'unknown';
 
     // Perform analyses based on file type and selected types
-    if (detectedType === 'log' || content.includes('ERROR') || content.includes('INFO')) {
-      // Log file - analyze for sensitive data and error patterns if selected
+    const isLogFile = detectedType === 'log' || content.includes('ERROR') || content.includes('INFO');
+    const hasLoggingCode = content.includes('console.log') || content.includes('logInfo') || content.includes('logError') || content.includes('logger');
+    
+    if (isLogFile || hasLoggingCode) {
+      // Log file or code with logging - analyze for sensitive data if selected
       if (!selectedTypes || selectedTypes.includes('sensitive-data')) {
-        console.log(`[FILE] Running sensitive data analysis for ${fileName}`);
+        console.log(`[FILE] Running sensitive data analysis for ${fileName} (${isLogFile ? 'log file' : 'code with logging'})`);
         results.sensitiveData = await performAnalysis(content, 'sensitive_data');
       }
     }
@@ -160,9 +163,13 @@ app.post('/api/analyze/batch', async (req, res) => {
         
         if (file.content) {
           // Only run sensitive data analysis if selected
-          if ((file.fileType === 'log' || file.content.includes('ERROR')) && 
+          // Run for log files, or code files that contain logging functions
+          const isLogFile = file.fileType === 'log' || file.content.includes('ERROR') || file.content.includes('INFO');
+          const hasLoggingCode = file.content.includes('console.log') || file.content.includes('logInfo') || file.content.includes('logError') || file.content.includes('logger');
+          
+          if ((isLogFile || hasLoggingCode) && 
               (!selectedTypes || selectedTypes.includes('sensitive-data'))) {
-            console.log(`[BATCH] Running sensitive data analysis for ${file.fileName}`);
+            console.log(`[BATCH] Running sensitive data analysis for ${file.fileName} (${isLogFile ? 'log file' : 'code with logging'})`);
             fileResults.sensitiveData = await performAnalysis(file.content, 'sensitive_data');
           }
           
@@ -599,6 +606,104 @@ app.post('/api/analyze/zip', async (req, res) => {
       console.log('[ZIP] Fallback risk heatmap:', riskHeatmap);
     }
 
+    // Generate error flows from AI analysis results
+    console.log('[ZIP] ===== GENERATING ERROR FLOWS =====');
+    let aiErrorFlows = [];
+    
+    // Extract error flows from AI analysis results
+    if (aiResults.modules && Array.isArray(aiResults.modules)) {
+      for (const module of aiResults.modules) {
+        // Check if module has error flow analysis
+        if (module.errorFlow && !module.errorFlow.error) {
+          try {
+            const errorFlowData = typeof module.errorFlow === 'string' ? JSON.parse(module.errorFlow) : module.errorFlow;
+            
+            // Create error flow entry from AI analysis
+            if (errorFlowData.root_cause || errorFlowData.flow_pattern) {
+              aiErrorFlows.push({
+                path: [errorFlowData.root_cause || 'Unknown root cause', errorFlowData.flow_pattern || 'Unknown pattern'],
+                stackTop: errorFlowData.root_cause || 'Unknown root cause',
+                cascade: errorFlowData.cascade_analysis || 'No cascade analysis available',
+                prevention: errorFlowData.prevention_strategies || [],
+                monitoring: errorFlowData.monitoring_points || [],
+                businessImpact: errorFlowData.business_impact || 'Unknown impact'
+              });
+            }
+          } catch (parseError) {
+            console.warn(`[ZIP] Failed to parse error flow data for ${module.fileName}:`, parseError.message);
+          }
+        }
+        
+        // Also check for error patterns in vulnerability analysis
+        if (module.vulnerabilities && !module.vulnerabilities.error) {
+          try {
+            const vulnData = typeof module.vulnerabilities === 'string' ? JSON.parse(module.vulnerabilities) : module.vulnerabilities;
+            
+            if (vulnData.vulnerabilities && Array.isArray(vulnData.vulnerabilities)) {
+              // Look for error-related vulnerabilities
+              const errorVulns = vulnData.vulnerabilities.filter(vuln => 
+                vuln.type?.toLowerCase().includes('error') ||
+                vuln.description?.toLowerCase().includes('error') ||
+                vuln.type?.toLowerCase().includes('logging') ||
+                vuln.type?.toLowerCase().includes('monitoring')
+              );
+              
+              errorVulns.forEach(vuln => {
+                aiErrorFlows.push({
+                  path: [vuln.description || 'Security vulnerability detected', vuln.fix || 'No fix available'],
+                  stackTop: vuln.type || 'Security Issue',
+                  cascade: vuln.description || 'No description available',
+                  prevention: [vuln.fix || 'No fix suggestion available'],
+                  monitoring: ['Monitor for ' + (vuln.type || 'security issues')],
+                  businessImpact: vuln.severity === 'critical' || vuln.severity === 'high' ? 'High business impact' : 'Medium business impact'
+                });
+              });
+            }
+          } catch (parseError) {
+            console.warn(`[ZIP] Failed to parse vulnerability data for error flows in ${module.fileName}:`, parseError.message);
+          }
+        }
+      }
+    }
+    
+    // If no AI-generated error flows, create some basic ones from log analysis
+    if (aiErrorFlows.length === 0) {
+      console.log('[ZIP] No AI error flows found, generating basic error flows from log analysis');
+      const logEntries = allLogs || [];
+      const errorEntries = logEntries.filter(entry => 
+        entry.level === 'ERROR' || entry.level === 'FATAL' || entry.level === 'WARN'
+      );
+      
+      if (errorEntries.length > 0) {
+        // Group errors by service
+        const errorGroups = {};
+        errorEntries.forEach(entry => {
+          const service = entry.service || 'unknown';
+          if (!errorGroups[service]) {
+            errorGroups[service] = [];
+          }
+          errorGroups[service].push(entry);
+        });
+        
+        // Create error flows for each service
+        Object.entries(errorGroups).forEach(([service, errors]) => {
+          if (errors.length > 0) {
+            const topError = errors[0];
+            aiErrorFlows.push({
+              path: errors.map(e => e.message || 'Error occurred'),
+              stackTop: topError.message || 'Error in ' + service,
+              cascade: `Multiple errors detected in ${service} service`,
+              prevention: ['Implement proper error handling', 'Add monitoring and alerting'],
+              monitoring: [`Monitor ${service} service for errors`],
+              businessImpact: 'Service degradation may affect user experience'
+            });
+          }
+        });
+      }
+    }
+    
+    console.log('[ZIP] Generated error flows:', aiErrorFlows.length);
+
     // Enhanced summary with meaningful insights - prefer AI analysis
     let errCount = 0, warnCount = 0, fatalCount = 0, infoCount = 0, totalLogs = 0;
     
@@ -657,7 +762,7 @@ app.post('/api/analyze/zip', async (req, res) => {
         ...(highErrorRate ? [{ risk: "High Error Rate", severity: "HIGH", description: `${Math.round(errorRate*100)}% of logs are errors` }] : []),
         ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
         ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
-        ...(hasErrorFlows ? [{ risk: "Error Cascades", severity: "MEDIUM", description: `${errorFlows.length} error flow patterns detected` }] : [])
+        ...(hasErrorFlows ? [{ risk: "Error Cascades", severity: "MEDIUM", description: `${aiErrorFlows.length} error flow patterns detected` }] : [])
       ],
       recommended_actions: [
         ...(criticalIssues ? ["Immediately investigate and fix fatal errors", "Implement circuit breakers to prevent cascading failures"] : []),
@@ -682,7 +787,7 @@ app.post('/api/analyze/zip', async (req, res) => {
       riskHeatmap: riskHeatmap.length,
       loggingScores: loggingScores.length,
       piiFindings: piiFindings.length,
-      errorFlows: errorFlows.length,
+      errorFlows: aiErrorFlows.length,
       logStatistics
     });
     
@@ -691,7 +796,7 @@ app.post('/api/analyze/zip', async (req, res) => {
       riskHeatmap, 
       loggingScores, 
       piiFindings, 
-      errorFlows, 
+      errorFlows: aiErrorFlows, 
       summary,
       logStatistics  // Add log statistics as separate field
     });

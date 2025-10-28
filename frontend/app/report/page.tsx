@@ -213,14 +213,74 @@ export default function DebugReport() {
           const piiFindings: any[] = []
           const errorFlows: any[] = []
           const aiRecommendations: string[] = []
+          const codeFixes: Array<{title: string, code: string, description: string}> = []
+          
+          // Also process the main analysis results if they exist
+          if (parsed.analysis) {
+            console.log("[Report] Processing main analysis results:", Object.keys(parsed.analysis))
+            
+            // Process vulnerabilities from main analysis
+            if (parsed.analysis.vulnerabilities && !parsed.analysis.vulnerabilities.error) {
+              const vulnData = parsed.analysis.vulnerabilities
+              if (vulnData.vulnerabilities && Array.isArray(vulnData.vulnerabilities)) {
+                vulnData.vulnerabilities.forEach((vuln: any) => {
+                  if (vuln.fix && typeof vuln.fix === 'string') {
+                    // Check if the fix contains code (looks like actual code)
+                    if (vuln.fix.includes('function') || vuln.fix.includes('const') || vuln.fix.includes('async') || vuln.fix.includes('require') || vuln.fix.includes('{') && vuln.fix.includes('}')) {
+                      // This looks like code, create a code fix
+                      codeFixes.push({
+                        title: `Fix for ${vuln.type || 'Security Issue'}`,
+                        code: vuln.fix,
+                        description: vuln.description || 'AI-generated code fix for security vulnerability'
+                      })
+                    } else {
+                      // This is a text recommendation
+                      aiRecommendations.push(vuln.fix)
+                    }
+                  }
+                })
+              }
+            }
+            
+            // Process code quality from main analysis
+            if (parsed.analysis.codeQuality && !parsed.analysis.codeQuality.error) {
+              const qualityData = parsed.analysis.codeQuality
+              if (qualityData.metrics?.logging !== undefined) {
+                loggingScores.push({
+                  module: 'main-analysis',
+                  score: qualityData.metrics.logging,
+                  gaps: qualityData.issues?.filter((issue: any) => 
+                    issue.type?.toLowerCase().includes('log') || 
+                    issue.description?.toLowerCase().includes('log')
+                  ).map((issue: any) => issue.description) || []
+                })
+              }
+            }
+            
+            // Process sensitive data from main analysis
+            if (parsed.analysis.sensitiveData && !parsed.analysis.sensitiveData.error) {
+              const sensitiveData = parsed.analysis.sensitiveData
+              if (sensitiveData.detections && Array.isArray(sensitiveData.detections)) {
+                sensitiveData.detections.forEach((detection: any) => {
+                  piiFindings.push({
+                    type: detection.type || 'UNKNOWN',
+                    file: 'main-analysis',
+                    line: 0,
+                    sample: detection.value || 'detected',
+                    action: detection.suggestion || 'mask/hash',
+                    confidence: detection.confidence || 0.8
+                  })
+                })
+              }
+            }
+          }
           
           for (const result of parsed.results) {
             // Process vulnerability analysis results for AI recommendations
             if (result.vulnerabilities && !result.vulnerabilities.error) {
               try {
-                const vulnerabilityData = typeof result.vulnerabilities === 'string'
-                  ? extractJsonBlock(result.vulnerabilities)
-                  : result.vulnerabilities
+                // The backend now normalizes responses, so we can use them directly
+                const vulnerabilityData = result.vulnerabilities
                 
                 console.log(`[Report] Processing vulnerabilities for ${result.fileName}:`, {
                   hasVulnerabilityData: !!vulnerabilityData,
@@ -229,11 +289,22 @@ export default function DebugReport() {
                   fullVulnerabilityData: vulnerabilityData
                 })
                 
-                // Extract AI-generated recommendations from vulnerability analysis
+                // Extract AI-generated recommendations and code fixes from vulnerability analysis
                 if (vulnerabilityData?.vulnerabilities && Array.isArray(vulnerabilityData.vulnerabilities)) {
                   vulnerabilityData.vulnerabilities.forEach((vuln: any) => {
                     if (vuln.fix && typeof vuln.fix === 'string') {
-                      aiRecommendations.push(vuln.fix)
+                      // Check if the fix contains code (looks like actual code)
+                      if (vuln.fix.includes('function') || vuln.fix.includes('const') || vuln.fix.includes('async') || vuln.fix.includes('require') || vuln.fix.includes('{') && vuln.fix.includes('}')) {
+                        // This looks like code, create a code fix
+                        codeFixes.push({
+                          title: `Fix for ${vuln.type || 'Security Issue'}`,
+                          code: vuln.fix,
+                          description: vuln.description || 'AI-generated code fix for security vulnerability'
+                        })
+                      } else {
+                        // This is a text recommendation
+                        aiRecommendations.push(vuln.fix)
+                      }
                     }
                   })
                 }
@@ -257,6 +328,16 @@ export default function DebugReport() {
                   console.log(`[Report] No structured recommendations found, extracting from raw text for ${result.fileName}`)
                   const rawText = result.vulnerabilities
                   
+                  // Debug: Show what code blocks we found
+                  const allBlocks = rawText.match(/```[\s\S]*?```/g)
+                  console.log(`[Report] Found ${allBlocks?.length || 0} code blocks in AI response`)
+                  if (allBlocks) {
+                    allBlocks.forEach((block: string, index: number) => {
+                      const preview = block.substring(0, 100).replace(/\n/g, ' ')
+                      console.log(`[Report] Code block ${index + 1}: ${preview}...`)
+                    })
+                  }
+                  
                   // Look for "Fix:" patterns in the text
                   const fixMatches = rawText.match(/- \*\*Fix:\*\* ([^\n]+)/g)
                   if (fixMatches) {
@@ -268,17 +349,91 @@ export default function DebugReport() {
                     })
                   }
                   
-                  // Look for code block suggestions
-                  const codeBlockMatches = rawText.match(/```[\s\S]*?```/g)
-                  if (codeBlockMatches) {
-                    codeBlockMatches.forEach((block: string) => {
-                      if (block.includes('bcrypt') || block.includes('validate') || block.includes('hash')) {
-                        const suggestion = block.includes('bcrypt') ? 'Use bcrypt for secure password hashing and comparison' :
-                                         block.includes('validate') ? 'Implement input validation for username and password' :
-                                         'Hash or anonymize sensitive data before logging'
-                        aiRecommendations.push(suggestion)
+                  // Extract JavaScript code blocks specifically (not JSON)
+                  const jsCodeBlocks = rawText.match(/```javascript[\s\S]*?```/gi)
+                  if (jsCodeBlocks) {
+                    jsCodeBlocks.forEach((block: string) => {
+                      const cleanCode = block.replace(/```javascript\n?/i, '').replace(/```$/, '').trim()
+                      
+                      if (cleanCode.length > 20 && !cleanCode.startsWith('{')) { // Skip JSON blocks
+                        let title = ''
+                        let description = ''
+                        
+                        if (cleanCode.includes('bcrypt') && cleanCode.includes('compare')) {
+                          title = 'Secure Password Authentication with bcrypt'
+                          description = 'Replace your current authentication logic with this secure bcrypt implementation'
+                        } else if (cleanCode.includes('validate') && cleanCode.includes('username')) {
+                          title = 'Input Validation Function'
+                          description = 'Add this validation function to check username and password inputs'
+                        } else if (cleanCode.includes('hash') && cleanCode.includes('username')) {
+                          title = 'Secure Logging with Hashed Usernames'
+                          description = 'Update your logging functions to hash sensitive data before logging'
+                        } else if (cleanCode.includes('timestamp') && cleanCode.includes('ISO')) {
+                          title = 'Enhanced Logging with Timestamps'
+                          description = 'Improve your logging functions with proper timestamps and structure'
+                        } else if (cleanCode.includes('function') || cleanCode.includes('const') || cleanCode.includes('async')) {
+                          title = 'Code Fix Implementation'
+                          description = 'Apply this code to fix the identified security issue'
+                        } else {
+                          title = 'Code Fix'
+                          description = 'Apply this code fix to resolve the identified issue'
+                        }
+                        
+                        codeFixes.push({
+                          title,
+                          code: cleanCode,
+                          description
+                        })
+                        
+                        // Also add a text recommendation
+                        aiRecommendations.push(`${title}: ${description}`)
                       }
                     })
+                  }
+                  
+                  // If no JavaScript blocks found, look for any code blocks that aren't JSON
+                  if (codeFixes.length === 0) {
+                    const allCodeBlocks = rawText.match(/```[\s\S]*?```/g)
+                    if (allCodeBlocks) {
+                      allCodeBlocks.forEach((block: string) => {
+                        const cleanCode = block.replace(/```\w*\n?/, '').replace(/```$/, '').trim()
+                        
+                        // Skip JSON blocks and only process actual code
+                        if (cleanCode.length > 20 && 
+                            !cleanCode.startsWith('{') && 
+                            !cleanCode.startsWith('[') &&
+                            (cleanCode.includes('function') || cleanCode.includes('const') || cleanCode.includes('async') || cleanCode.includes('require'))) {
+                          
+                          let title = ''
+                          let description = ''
+                          
+                          if (cleanCode.includes('bcrypt')) {
+                            title = 'Secure Password Authentication with bcrypt'
+                            description = 'Replace your current authentication logic with this secure bcrypt implementation'
+                          } else if (cleanCode.includes('validate')) {
+                            title = 'Input Validation Function'
+                            description = 'Add this validation function to check username and password inputs'
+                          } else if (cleanCode.includes('hash') || cleanCode.includes('anonymize')) {
+                            title = 'Secure Logging with Hashed Usernames'
+                            description = 'Update your logging functions to hash sensitive data before logging'
+                          } else if (cleanCode.includes('timestamp')) {
+                            title = 'Enhanced Logging with Timestamps'
+                            description = 'Improve your logging functions with proper timestamps and structure'
+                          } else {
+                            title = 'Code Fix Implementation'
+                            description = 'Apply this code to fix the identified security issue'
+                          }
+                          
+                          codeFixes.push({
+                            title,
+                            code: cleanCode,
+                            description
+                          })
+                          
+                          aiRecommendations.push(`${title}: ${description}`)
+                        }
+                      })
+                    }
                   }
                   
                   // Look for specific recommendation patterns
@@ -308,9 +463,8 @@ export default function DebugReport() {
             // Process code quality results for logging scores
             if (result.codeQuality && !result.codeQuality.error) {
               try {
-                const qualityData = typeof result.codeQuality === 'string' 
-                  ? extractJsonBlock(result.codeQuality) 
-                  : result.codeQuality
+                // The backend now normalizes responses, so we can use them directly
+                const qualityData = result.codeQuality
                 
                 console.log(`[Report] Processing code quality for ${result.fileName}:`, {
                   hasQualityData: !!qualityData,
@@ -360,9 +514,8 @@ export default function DebugReport() {
             // Process sensitive data results
             if (result.sensitiveData && !result.sensitiveData.error) {
               try {
-                const sensitiveData = typeof result.sensitiveData === 'string'
-                  ? extractJsonBlock(result.sensitiveData)
-                  : result.sensitiveData
+                // The backend now normalizes responses, so we can use them directly
+                const sensitiveData = result.sensitiveData
                 
                 if (sensitiveData.detections && Array.isArray(sensitiveData.detections)) {
                   sensitiveData.detections.forEach((detection: any) => {
@@ -468,19 +621,22 @@ export default function DebugReport() {
             const uniqueRecommendations = [...new Set(combinedRecommendations)].slice(0, 10)
             
             const aiSummary = {
-              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} Analyzed ${parsed.results.length} file(s).`,
+              executive_summary: `AI Analysis Complete. System Status: ${healthStatus}. ${poorLogging ? `Poor logging practices detected (avg score: ${Math.round(avgLoggingScore)}/100).` : ''} ${hasPii ? `${piiFindings.length} sensitive data instances found.` : ''} ${hasAiRecommendations ? `${aiRecommendations.length} AI-generated recommendations available.` : ''} ${codeFixes.length > 0 ? `${codeFixes.length} copy-paste ready code fixes available.` : ''} Analyzed ${parsed.results.length} file(s).`,
               top_risks: [
                 ...(poorLogging ? [{ risk: "Poor Logging Quality", severity: "MEDIUM", description: `Average logging score: ${Math.round(avgLoggingScore)}/100` }] : []),
                 ...(hasPii ? [{ risk: "Data Privacy", severity: "HIGH", description: `${piiFindings.length} sensitive data instances found` }] : []),
                 ...(hasAiRecommendations ? [{ risk: "Security Vulnerabilities", severity: "HIGH", description: `${aiRecommendations.length} AI-identified issues require attention` }] : [])
               ],
-              recommended_actions: uniqueRecommendations
+              recommended_actions: uniqueRecommendations,
+              code_fixes: codeFixes
             }
             
             setSummaryData(aiSummary)
             setHasDynamicSummary(true)
             console.log("[Report] Generated AI-based summary from individual file analysis with", aiRecommendations.length, "AI recommendations")
             console.log("[Report] AI Recommendations:", aiRecommendations)
+            console.log("[Report] Code Fixes Found:", codeFixes.length)
+            console.log("[Report] Code Fixes:", codeFixes)
             console.log("[Report] Final combined recommendations:", uniqueRecommendations)
           }
         }
