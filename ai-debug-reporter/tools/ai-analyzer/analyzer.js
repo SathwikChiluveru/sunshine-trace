@@ -48,7 +48,7 @@ async function chat(system, user) {
     headers,
     body: JSON.stringify({
       model: MODEL,
-      temperature: 0.7,
+      temperature: 0.1,
       max_tokens: 2048,
       messages: [
         { role: 'system', content: system },
@@ -378,13 +378,18 @@ function normalizeSensitiveDataResponse(response) {
 function normalizeVulnerabilityResponse(response) {
   // Handle both devnet and openrouter formats
   if (response.vulnerabilities && Array.isArray(response.vulnerabilities)) {
-    // Ensure each vulnerability has required fields
+    // Ensure each vulnerability has required fields and prefer concrete code fixes
     const normalizedVulns = response.vulnerabilities.map(vuln => ({
       type: vuln.type || 'Unknown',
       severity: vuln.severity || 'medium',
       description: vuln.description || 'No description available',
       location: vuln.location || 'Unknown location',
-      fix: vuln.fix || 'No fix suggestion available'
+      // Prefer `after_code` (copy-paste ready) over textual `fix`
+      fix: (typeof vuln.after_code === 'string' && vuln.after_code.trim().length > 0)
+        ? vuln.after_code
+        : (vuln.fix || 'No fix suggestion available'),
+      before_code: vuln.before_code || null,
+      after_code: vuln.after_code || null
     }));
     
     return {
