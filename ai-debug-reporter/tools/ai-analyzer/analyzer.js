@@ -48,7 +48,7 @@ async function chat(system, user) {
     headers,
     body: JSON.stringify({
       model: MODEL,
-      temperature: 0.1,
+      temperature: 0.7,
       max_tokens: 2048,
       messages: [
         { role: 'system', content: system },
@@ -115,7 +115,15 @@ Analyze content for sensitive data exposure in both log files and code files:
 Consider context - distinguish between real data and placeholders/test data.
 For code files, focus on hardcoded values, error codes, and logging practices that could expose sensitive information.
 Return JSON with: {
-  detections: [{type, value, confidence, context, suggestion}],
+  detections: [{
+    type, 
+    value, 
+    confidence, 
+    context, 
+    suggestion: "Detailed remediation steps",
+    before_code: "The problematic code/log snippet",
+    after_code: "The secure replacement code/logging approach"
+  }],
   error_analysis: {
     total_logs: number,
     error_count: number,
@@ -147,9 +155,27 @@ Analyze code for security vulnerabilities including:
 - Components with known vulnerabilities
 - Insufficient logging and monitoring
 
-Return JSON with: {vulnerabilities: [{type, severity, description, location, fix}, ...], risk_score, summary}`
+For each vulnerability found, provide:
+1. A clear description of the issue
+2. The exact location in the code
+3. A complete, copy-paste ready code fix that can be directly implemented
+4. The severity level
+
+Return JSON with: {
+  vulnerabilities: [{
+    type, 
+    severity, 
+    description, 
+    location, 
+    fix: "Complete, copy-paste ready code solution with proper imports and implementation",
+    before_code: "The vulnerable code snippet",
+    after_code: "The secure replacement code"
+  }, ...], 
+  risk_score, 
+  summary
+}`
   
-  const user = `Analyze this ${fileType} code for security vulnerabilities:\n${codeContent}`;
+  const user = `Analyze this ${fileType} code for security vulnerabilities and provide complete, copy-paste ready fixes:\n${codeContent}`;
   return await chat(system, user);
 }
 
@@ -176,8 +202,15 @@ Return JSON with: {
     documentation,
     logging: number (0-100, where 100 is excellent logging practices)
   }, 
-  issues: [{type, severity, description, suggestion}], 
-  recommendations
+  issues: [{
+    type, 
+    severity, 
+    description, 
+    suggestion: "Detailed improvement suggestion",
+    before_code: "The problematic code snippet",
+    after_code: "The improved code solution"
+  }], 
+  recommendations: ["Actionable improvement recommendations"]
 }`
   
   const user = `Evaluate the quality of this ${fileType} code, paying special attention to logging practices:\n${codeContent}`;
