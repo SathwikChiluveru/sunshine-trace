@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, BarChart3, GitBranch, Shield, RefreshCw, Lightbulb, Code2, Brain, Bug } from "lucide-react"
+import { Search, BarChart3, GitBranch, Shield, RefreshCw, Lightbulb, Code2, Brain, Bug, Settings } from "lucide-react"
 
 interface SidebarProps {
   activeSection: string

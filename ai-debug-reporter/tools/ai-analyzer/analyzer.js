@@ -7,7 +7,7 @@ require('dotenv').config();
 // Provider selection: prefer OpenRouter if key present, else internal vLLM
 const OR_ENABLED   = !!process.env.OPENROUTER_API_KEY;
 const OR_BASE      = process.env.OPENROUTER_API_BASE || 'https://openrouter.ai/api/v1';
-const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen2.5-vl-32b-instruct:free';
+const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen3-30b-a3b-instruct-2507';
 const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
 const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';
 
@@ -48,7 +48,7 @@ async function chat(system, user) {
     headers,
     body: JSON.stringify({
       model: MODEL,
-      temperature: 0.7,
+      temperature: 0.1,
       max_tokens: 2048,
       messages: [
         { role: 'system', content: system },
@@ -114,26 +114,28 @@ Analyze content for sensitive data exposure in both log files and code files:
 
 Consider context - distinguish between real data and placeholders/test data.
 For code files, focus on hardcoded values, error codes, and logging practices that could expose sensitive information.
+IMPORTANT: Generate valid JSON only. All strings must use double quotes and escape any quotes inside them.
+
 Return JSON with: {
-  detections: [{
-    type, 
-    value, 
-    confidence, 
-    context, 
-    suggestion: "Detailed remediation steps",
-    before_code: "The problematic code/log snippet",
-    after_code: "The secure replacement code/logging approach"
+  "detections": [{
+    "type": "string", 
+    "value": "string", 
+    "confidence": "string", 
+    "context": "string", 
+    "suggestion": "Detailed remediation steps",
+    "before_code": "The problematic code/log snippet (properly escaped for JSON)",
+    "after_code": "The secure replacement code/logging approach (properly escaped for JSON)"
   }],
-  error_analysis: {
-    total_logs: number,
-    error_count: number,
-    warning_count: number,
-    fatal_count: number,
-    info_count: number,
-    error_rate: number
+  "error_analysis": {
+    "total_logs": number,
+    "error_count": number,
+    "warning_count": number,
+    "fatal_count": number,
+    "info_count": number,
+    "error_rate": number
   },
-  error_flows: [{trigger, cascade, stackTop, severity}],
-  summary: "Overall system health and security assessment"
+  "error_flows": [{"trigger": "string", "cascade": "string", "stackTop": "string", "severity": "string"}],
+  "summary": "Overall system health and security assessment"
 }`
   
   const user = `Analyze this content comprehensively for sensitive data exposure:\n${logContent}`;
@@ -161,18 +163,21 @@ For each vulnerability found, provide:
 3. A complete, copy-paste ready code fix that can be directly implemented
 4. The severity level
 
+IMPORTANT: Generate valid JSON only. All strings must use double quotes and escape any quotes inside them.
+Code examples in before_code and after_code must be properly escaped for JSON.
+
 Return JSON with: {
-  vulnerabilities: [{
-    type, 
-    severity, 
-    description, 
-    location, 
-    fix: "Complete, copy-paste ready code solution with proper imports and implementation",
-    before_code: "The vulnerable code snippet",
-    after_code: "The secure replacement code"
-  }, ...], 
-  risk_score, 
-  summary
+  "vulnerabilities": [{
+    "type": "string", 
+    "severity": "string", 
+    "description": "string", 
+    "location": "string", 
+    "fix": "Complete, copy-paste ready code solution with proper imports and implementation",
+    "before_code": "The vulnerable code snippet (properly escaped for JSON)",
+    "after_code": "The secure replacement code (properly escaped for JSON)"
+  }], 
+  "risk_score": number, 
+  "summary": "string"
 }`
   
   const user = `Analyze this ${fileType} code for security vulnerabilities and provide complete, copy-paste ready fixes:\n${codeContent}`;
@@ -193,24 +198,26 @@ Evaluate code quality across multiple dimensions:
 - Code organization and structure
 - LOGGING QUALITY: Assess logging practices including structured logging, error codes, correlation IDs, log levels, and observability
 
+IMPORTANT: Generate valid JSON only. All strings must use double quotes and escape any quotes inside them.
+
 Return JSON with: {
-  quality_score, 
-  metrics: {
-    complexity, 
-    maintainability, 
-    performance, 
-    documentation,
-    logging: number (0-100, where 100 is excellent logging practices)
+  "quality_score": number, 
+  "metrics": {
+    "complexity": number, 
+    "maintainability": number, 
+    "performance": number, 
+    "documentation": number,
+    "logging": number
   }, 
-  issues: [{
-    type, 
-    severity, 
-    description, 
-    suggestion: "Detailed improvement suggestion",
-    before_code: "The problematic code snippet",
-    after_code: "The improved code solution"
+  "issues": [{
+    "type": "string", 
+    "severity": "string", 
+    "description": "string", 
+    "suggestion": "Detailed improvement suggestion",
+    "before_code": "The problematic code snippet (properly escaped for JSON)",
+    "after_code": "The improved code solution (properly escaped for JSON)"
   }], 
-  recommendations: ["Actionable improvement recommendations"]
+  "recommendations": ["Actionable improvement recommendations"]
 }`
   
   const user = `Evaluate the quality of this ${fileType} code, paying special attention to logging practices:\n${codeContent}`;
@@ -291,7 +298,23 @@ function normalizeAIResponse(response, analysisType) {
         parsedResponse = JSON.parse(cleanResponse);
       } catch (parseError) {
         console.warn(`[AI] Failed to parse response as JSON:`, parseError.message);
-        return { error: `Failed to parse AI response: ${parseError.message}` };
+        console.warn(`[AI] Problematic JSON at position ${parseError.message.match(/position (\d+)/)?.[1] || 'unknown'}`);
+        
+        // Try to fix common JSON issues
+        try {
+          let fixedResponse = cleanResponse
+            .replace(/([^\\])'/g, '$1\\\'')  // Escape unescaped single quotes
+            .replace(/^'/g, "\\\'")          // Fix leading single quote
+            .replace(/'([^,}\]]*[^\\])'/g, '"$1"')  // Convert single quotes to double quotes for strings
+            .replace(/([^\\])'([^,}\]]*[^\\])'/g, '$1"$2"');  // More single quote fixes
+          
+          parsedResponse = JSON.parse(fixedResponse);
+          console.log(`[AI] Successfully fixed JSON parsing issues`);
+        } catch (fixError) {
+          console.warn(`[AI] Could not fix JSON:`, fixError.message);
+          console.warn(`[AI] Raw response:`, cleanResponse.substring(0, 1000));
+          return { error: `Failed to parse AI response: ${parseError.message}` };
+        }
       }
     } else {
       parsedResponse = response;
@@ -355,13 +378,18 @@ function normalizeSensitiveDataResponse(response) {
 function normalizeVulnerabilityResponse(response) {
   // Handle both devnet and openrouter formats
   if (response.vulnerabilities && Array.isArray(response.vulnerabilities)) {
-    // Ensure each vulnerability has required fields
+    // Ensure each vulnerability has required fields and prefer concrete code fixes
     const normalizedVulns = response.vulnerabilities.map(vuln => ({
       type: vuln.type || 'Unknown',
       severity: vuln.severity || 'medium',
       description: vuln.description || 'No description available',
       location: vuln.location || 'Unknown location',
-      fix: vuln.fix || 'No fix suggestion available'
+      // Prefer `after_code` (copy-paste ready) over textual `fix`
+      fix: (typeof vuln.after_code === 'string' && vuln.after_code.trim().length > 0)
+        ? vuln.after_code
+        : (vuln.fix || 'No fix suggestion available'),
+      before_code: vuln.before_code || null,
+      after_code: vuln.after_code || null
     }));
     
     return {

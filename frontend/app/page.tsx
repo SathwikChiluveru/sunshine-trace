@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { SunshineLogo } from "@/components/sunshine-logo"
 import { extractZipFile, type ExtractedFile } from "@/lib/zip-utils"
 import { ZipFileExplorer } from "@/components/zip-file-explorer"
+import RulesSection from "@/components/sections/rules-section"
 import { Upload, BarChart3, AlertTriangle, Shield, RefreshCw, Lightbulb } from "lucide-react"
 
 type FeatureType = "logging-quality" | "error-flow" | "sensitive-data" | "recommendations"
@@ -400,32 +401,41 @@ export default function Home() {
             )}
           </div>
 
-          {/* File Upload */}
-          {files.length === 0 && (
-          <FileUploadArea onFilesAdded={handleFilesAdded} />
-          )}
+          {/* File Upload and Team Rules Side by Side */}
+          <div className="flex gap-6 items-start">
+            {/* File Upload Area */}
+            <div className="flex-1">
+              {files.length === 0 && (
+                <FileUploadArea onFilesAdded={handleFilesAdded} />
+              )}
 
-          {/* Uploaded Files */}
-          {files.length > 0 && (
-            <UploadedFilesList 
-              files={files} 
-              onRemoveFile={handleRemoveFile}
-              includeInAI={includeInAI}
-              onToggleIncludeAI={handleToggleIncludeAI}
-            />
-          )}
+              {/* Uploaded Files */}
+              {files.length > 0 && (
+                <UploadedFilesList 
+                  files={files} 
+                  onRemoveFile={handleRemoveFile}
+                  includeInAI={includeInAI}
+                  onToggleIncludeAI={handleToggleIncludeAI}
+                />
+              )}
 
-          {/* ZIP Explorer */}
-          {showZipExplorer && extractedFiles.length > 0 && (
-            <div className="max-w-full overflow-hidden rounded-xl border border-border/50 bg-background p-1">
-              <ZipFileExplorer
-                files={extractedFiles}
-                onFilesChange={setExtractedFiles}
-                onClose={() => setShowZipExplorer(false)}
-              />
+              {/* ZIP Explorer */}
+              {showZipExplorer && extractedFiles.length > 0 && (
+                <div className="max-w-full overflow-hidden rounded-xl border border-border/50 bg-background p-1">
+                  <ZipFileExplorer
+                    files={extractedFiles}
+                    onFilesChange={setExtractedFiles}
+                    onClose={() => setShowZipExplorer(false)}
+                  />
+                </div>
+              )}
             </div>
-          )}
 
+            {/* Team Rules - Outside and to the right */}
+            <div className="flex-shrink-0">
+              <RulesSection />
+            </div>
+          </div>
 
           <h3 className="text-lg font-semibold text-foreground mb-4">
               Select Analysis Types {selectedAnalysisTypes.length > 0 && `(${selectedAnalysisTypes.length} selected)`}

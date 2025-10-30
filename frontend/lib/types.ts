@@ -86,3 +86,24 @@ export interface ParsedLogData {
     gaps: string[]
   }>
 }
+
+// Team Rules types
+export type RuleSeverity = "low" | "medium" | "high"
+
+export interface TeamRef {
+  id: string
+  name: string
+}
+
+export interface Rule {
+  id: string
+  title: string
+  description?: string
+  severity: RuleSeverity
+  appliesTo?: string[]
+}
+
+export interface RuleBundle {
+  teams: TeamRef[]
+  rules: Rule[]
+}
