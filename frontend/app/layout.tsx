@@ -8,9 +8,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sunshine Trace - AI-Powered Debugging Assistant",
+  title: "Sunshine Trace",
   description: "Intelligent log analysis and debugging insights with AI-powered recommendations",
-  generator: "v0.app",
 }
 
 export default function RootLayout({

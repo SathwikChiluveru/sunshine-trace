@@ -225,7 +225,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
                     )}
                   </div>
                   
-                  {/* Actions */}
+                  {/* Actions
                   <div className="flex-shrink-0">
                     {isCode ? (
                       <Button 
@@ -241,7 +241,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
                         Learn More
                       </Button>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </Card>
             )

@@ -49,10 +49,13 @@ export function Header({ overallScore = 68, logData = null }: HeaderProps) {
     <header className="fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50">
       <div className="h-full px-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <SunshineLogo className="size-7" />
-            <h1 className="text-xl font-semibold text-balance">Sunshine Trace</h1>
-          </div>
+        <div 
+  className="flex items-center gap-3 cursor-pointer"
+  onClick={() => window.location.href = "http://localhost:3000"}
+>
+  <SunshineLogo className="size-7" />
+  <h1 className="text-xl font-semibold text-balance">Sunshine Trace</h1>
+</div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Healthcare API Service</span>
             <span className="text-xs text-muted-foreground">•</span>

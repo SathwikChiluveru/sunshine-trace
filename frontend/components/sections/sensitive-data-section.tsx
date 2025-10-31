@@ -82,9 +82,6 @@ export function SensitiveDataSection({ data }: SensitiveDataSectionProps) {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">{detection.action}</span>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <Copy className="h-3 w-3" />
-                          </Button>
                         </div>
                       </td>
                     </tr>
