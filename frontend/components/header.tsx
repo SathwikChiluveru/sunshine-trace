@@ -69,7 +69,7 @@ export function Header({ overallScore = 68, logData = null }: HeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Overall Health:</span>
             <div
               className={`flex items-center gap-2 px-3 py-1 rounded-full bg-${color}/10 border border-${color}/20`}
@@ -80,33 +80,10 @@ export function Header({ overallScore = 68, logData = null }: HeaderProps) {
                 {grade} ({Math.round(overallScore)}%)
               </span>
             </div>
-          </div>
+          </div> */}
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-                <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => handleExport("html")}>
-                <FileText className="h-4 w-4 mr-2" />
-                Export as HTML
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("json")}>
-                <FileJson className="h-4 w-4 mr-2" />
-                Export as JSON
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                <Printer className="h-4 w-4 mr-2" />
-                Print / Save as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </header>

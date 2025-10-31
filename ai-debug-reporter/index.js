@@ -54,6 +54,55 @@ app.get('/api/summary', (req, res) => {
   });
 });
 
+// Static dataset for summary metrics and history until real storage is wired up
+const summaryMetricsData = {
+  currentMetrics: {
+    loggingQuality: 2,
+    errorFlows: 3,
+    sensitiveData: 4,
+    recommendations: 11,
+  },
+  history: [
+    {
+      id: "1",
+      timestamp: "2025-10-30T14:30:00.000Z",
+      fileName: "debug-report-v2.log",
+      metrics: {
+        loggingQuality: 5,
+        errorFlows: 2,
+        sensitiveData: 6,
+        recommendations: 8,
+      },
+    },
+    {
+      id: "2",
+      timestamp: "2025-10-29T09:15:00.000Z",
+      fileName: "error-analysis.log",
+      metrics: {
+        loggingQuality: 4,
+        errorFlows: 4,
+        sensitiveData: 5,
+        recommendations: 12,
+      },
+    },
+    {
+      id: "3",
+      timestamp: "2025-10-28T16:45:00.000Z",
+      fileName: "system-debug.log",
+      metrics: {
+        loggingQuality: 3,
+        errorFlows: 3,
+        sensitiveData: 7,
+        recommendations: 9,
+      },
+    },
+  ],
+};
+
+app.get('/api/summary/metrics', (req, res) => {
+  res.json(summaryMetricsData);
+});
+
 // AI Analysis endpoint
 app.post('/api/ai/analyze', async (req, res) => {
   try {
