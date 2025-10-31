@@ -817,6 +817,7 @@ export default function DebugReport() {
                   executiveSummary={summaryData.executive_summary}
                   riskHeatmapData={riskHeatmapData}
                   summaryData={summaryData}
+                  findingsData={findingsData}
                 />
               )}
             </section>
@@ -839,7 +840,7 @@ export default function DebugReport() {
                 <SensitiveDataSection data={findingsData} />
               )}
             </section>
-            <section id="ai-sensitive-data">
+            {/* <section id="ai-sensitive-data">
               {aiAnalysisResults && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('sensitive-data')) && (
                 <AISensitiveDataSection data={aiAnalysisResults} />
               )}
@@ -848,7 +849,7 @@ export default function DebugReport() {
               {aiAnalysisResults && (!selectedAnalysisTypes || selectedAnalysisTypes.includes('recommendations')) && (
                 <AIVulnerabilitySection data={aiAnalysisResults} />
               )}
-            </section>
+            </section> */}
             {/* <section id="recurring-bugs">
               <RecurringBugsSection data={logData} />
             </section> */}

@@ -10,6 +10,11 @@ interface SummarySectionProps {
   executiveSummary: string | null;  
   riskHeatmapData: Array<{ name: string; score: number }>;
   summaryData?: any; // Add summaryData to access logStatistics
+  findingsData?: {
+    loggingScores?: Array<unknown>;
+    piiFindings?: Array<unknown>;
+    aiRecommendations?: Array<unknown>;
+  };
 }
 
 export function SummarySection({
@@ -17,6 +22,7 @@ export function SummarySection({
   executiveSummary,
   riskHeatmapData,
   summaryData,
+  findingsData,
 }: SummarySectionProps) {
   const [isHeatmapVisible, setIsHeatmapVisible] = useState(true)
   // Get log statistics from either parsed data or summary data
@@ -42,19 +48,33 @@ export function SummarySection({
   };
 
   const logStats = getLogStats();
+  const loggingQualityCount =
+    findingsData?.loggingScores?.length ??
+    (Array.isArray(riskHeatmapData) ? riskHeatmapData.length : 0);
+  const sensitiveDataCount =
+    findingsData?.piiFindings?.length ??
+    (Array.isArray(data?.sensitiveData) ? data.sensitiveData.length : 0);
+  const guidanceCount =
+    Array.isArray(summaryData?.ai_recommendations)
+      ? summaryData.ai_recommendations.length
+      : Array.isArray(summaryData?.recommended_actions)
+        ? summaryData.recommended_actions.length
+        : 0;
+  const codeFixCount = Array.isArray(summaryData?.code_fixes) ? summaryData.code_fixes.length : 0;
+  const aiRecommendationCount =
+    findingsData?.aiRecommendations?.length ??
+    guidanceCount + codeFixCount;
   
   const issueStats = logStats
     ? [
-        { label: "Total Logs", count: logStats.totalLogs, color: "info" },
-        { label: "Errors", count: logStats.errorCount, color: "error" },
-        { label: "Warnings", count: logStats.warningCount, color: "warning" },
-        { label: "Sensitive Data", count: logStats.sensitiveDataCount, color: "error" },
+        { label: "Logging Quality", count: loggingQualityCount, color: "info" },
+        { label: "Sensitive Data Detection", count: sensitiveDataCount, color: "error" },
+        { label: "AI Recommendations", count: aiRecommendationCount, color: "warning" },
       ]
     : [
-        { label: "Missing Logs", count: 47, color: "warning" },
-        { label: "Crashes", count: 12, color: "error" },
-        { label: "Info Overload", count: 23, color: "info" },
-        { label: "Sensitive Info", count: 8, color: "error" },
+        { label: "Logging Quality", count: loggingQualityCount, color: "info" },
+        { label: "Sensitive Data Detection", count: sensitiveDataCount, color: "error" },
+        { label: "AI Recommendations", count: aiRecommendationCount, color: "warning" },
       ];
 
   return (
@@ -71,7 +91,7 @@ export function SummarySection({
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {issueStats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-start justify-between mb-2">
