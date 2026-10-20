@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, BarChart3, GitBranch, Shield, RefreshCw, Lightbulb, Code2, Brain, Bug, Settings } from "lucide-react"
+import { Search, BarChart3, GitBranch, Shield, Code2, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 interface SidebarProps {
   activeSection: string
   onSectionChange: (section: string) => void
+  selectedAnalysisTypes?: string[] | null
 }
 
 const sections = [
@@ -16,8 +18,9 @@ const sections = [
   { id: "recommendations", label: "Recommendations", icon: Code2 },
 ]
 
-export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export function Sidebar({ activeSection, onSectionChange, selectedAnalysisTypes }: SidebarProps) {
   const [currentSection, setCurrentSection] = useState(activeSection)
+  const visibleSections = sections.filter(section => section.id === "summary" || !selectedAnalysisTypes || selectedAnalysisTypes.includes(section.id === "error-flows" ? "error-flow" : section.id))
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -25,7 +28,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const id = entry.target.id
-            console.log(`Section ${id} is in view`); 
             setCurrentSection(id)
             onSectionChange(id)
           }
@@ -45,23 +47,24 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
     if (element) {
-      const offset = 80
+      const offset = window.innerWidth < 1024 ? 140 : 96
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - offset
-      console.log(`Scrolling to: ${id}, Offset position: ${offsetPosition}`);
+      setCurrentSection(id)
       window.scrollTo({
         top: offsetPosition,
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       })
     }
   }
 
   return (
-    <aside className="fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-sidebar border-r border-sidebar-border overflow-y-auto">
-      <nav className="p-4 space-y-1">
-        {sections.map(({ id, label, icon: Icon }) => (
+    <aside className="report-sidebar fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] bg-sidebar border-r border-sidebar-border overflow-y-auto">
+      <nav className="p-4 space-y-1" aria-label="Report sections">
+        {visibleSections.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
+            aria-current={currentSection === id ? "location" : undefined}
             onClick={() => scrollToSection(id)}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
               currentSection === id
@@ -74,6 +77,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
           </button>
         ))}
       </nav>
+      <div className="report-sidebar-footer"><Link href="/"><ArrowLeft className="size-4" /> Back to workspace</Link><p>Sunshine Trace</p></div>
     </aside>
   )
 }

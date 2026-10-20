@@ -69,8 +69,8 @@ export function FileUploadArea({ onFilesAdded }: FileUploadAreaProps) {
       onDrop={handleDrop}
       onPaste={handlePaste}
       className={cn(
-        "relative rounded-xl border-2 border-dashed transition-all duration-200",
-        isDragging ? "border-primary bg-primary/5 scale-[1.02]" : "border-border/50 hover:border-border",
+        "upload-area relative h-full rounded-xl border border-dashed bg-card transition-colors duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/60 hover:bg-muted/50",
       )}
     >
       <input
@@ -81,15 +81,15 @@ export function FileUploadArea({ onFilesAdded }: FileUploadAreaProps) {
         className="sr-only"
         accept=".log,.txt,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.cs,.rb,.go,.php,.swift,.kt,.rs,.zip"
       />
-      <label htmlFor="file-upload" className="flex flex-col items-center justify-center px-6 py-12 cursor-pointer">
-        <div className="flex items-center justify-center size-16 rounded-full bg-muted mb-4">
+      <label htmlFor="file-upload" className="flex h-full flex-col items-center justify-center px-6 py-8 cursor-pointer">
+        <div className="flex items-center justify-center size-11 rounded-xl bg-muted mb-4">
           {isDragging ? (
-            <FileText className="size-8 text-primary animate-bounce" />
+            <FileText className="size-5 text-primary" />
           ) : (
-            <Upload className="size-8 text-muted-foreground" />
+            <Upload className="size-5 text-muted-foreground" />
           )}
         </div>
-        <p className="text-lg font-medium mb-2">{isDragging ? "Drop files here" : "Upload your files"}</p>
+        <p className="text-sm font-semibold mb-2">{isDragging ? "Drop files here" : "Upload your files"}</p>
         <p className="text-sm text-muted-foreground text-center max-w-sm">
           Drag and drop files here, paste from clipboard, or click to browse
         </p>

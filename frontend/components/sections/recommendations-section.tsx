@@ -109,7 +109,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="report-recommendations-heading flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-3xl font-bold text-balance mb-2">AI Recommendations</h2>
           <p className="text-muted-foreground text-pretty">
@@ -167,9 +167,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
             const isCode = item.type === 'code'
             
             return (
-              <Card key={item.id} className={`p-6 border-l-4 ${
-                isCode ? 'border-l-blue-500' : 'border-l-green-500'
-              }`}>
+              <Card key={item.id} className="report-recommendation p-6">
                 <div className="flex items-start gap-4">
                   {/* Type Icon */}
                   <div className="flex-shrink-0">
@@ -186,7 +184,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
                   
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center flex-wrap gap-2 mb-2">
                       <h4 className="font-semibold text-lg">{item.title}</h4>
                       <Badge variant={isCode ? "default" : "secondary"}>
                         {isCode ? "Code Fix" : "Guidance"}
@@ -266,7 +264,7 @@ export function RecommendationsSection({ data }: RecommendationsSectionProps) {
 }
 
 // Helper functions
-function detectLanguage(code: string): string {
+function detectLanguage(code: string = ""): string {
   if (code.includes('function') || code.includes('const') || code.includes('let') || code.includes('var')) {
     return 'JavaScript'
   }

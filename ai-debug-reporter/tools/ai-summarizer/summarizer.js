@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const API_BASE = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
+const API_BASE = process.env.AI_API_BASE || 'http://localhost:11435/v1';
 const MODEL    = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
 const API_KEY  = process.env.AI_API_KEY  || 'local'; // vLLM ignores
 

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { FileUploadArea } from "@/components/file-upload-area"
 import { UploadedFilesList } from "@/components/uploaded-files-list"
 import { Button } from "@/components/ui/button"
-import { Sparkles } from "lucide-react"
 import { parseLogFile } from "@/lib/log-parser"
 import type { ParsedLogData } from "@/lib/types"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,7 +12,7 @@ import { SunshineLogo } from "@/components/sunshine-logo"
 import { extractZipFile, type ExtractedFile } from "@/lib/zip-utils"
 import { ZipFileExplorer } from "@/components/zip-file-explorer"
 import RulesSection from "@/components/sections/rules-section"
-import { Upload, BarChart3, AlertTriangle, Shield, RefreshCw, Lightbulb } from "lucide-react"
+import { Terminal, Check, ArrowRight, BarChart3, AlertTriangle, Shield, Lightbulb, Construction } from "lucide-react"
 
 type FeatureType = "logging-quality" | "error-flow" | "sensitive-data" | "recommendations"
 
@@ -23,7 +22,7 @@ export default function Home() {
   const [pastedLogs, setPastedLogs] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"
+  const API_BASE = ""
   const MAX_PASTE_CHARS = 200_000
 
   const [comparisonMode, setComparisonMode] = useState(false)
@@ -334,39 +333,48 @@ export default function Home() {
     
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="landing-page min-h-screen bg-background flex flex-col">
+      <div className="hackathon-corner">
+        <p className="hackathon-ribbon">
+          <span className="flex items-center justify-center gap-1.5 font-bold"><Construction className="size-3 shrink-0" aria-hidden="true" />No longer supported</span>
+          <span className="block">Internal company information removed</span>
+        </p>
+      </div>
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4">
+      <header className="landing-header border-b border-border bg-card">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6 sm:px-10">
           <div className="flex items-center gap-3">
-            <SunshineLogo className="size-8" />
-            <span className="font-semibold text-lg">Sunshine Trace</span>
+            <SunshineLogo className="size-10" />
+            <span className="font-semibold text-lg tracking-tight">Sunshine Trace</span>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-3xl space-y-8">
-          <div className="text-center space-y-4 mb-12">
-            <div className="inline-flex items-center justify-center size-20 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 mb-4">
-              <SunshineLogo className="size-12" />
+      <main className="flex-1 px-5 py-12 sm:px-8 sm:py-16">
+        <div className="mx-auto w-full max-w-4xl space-y-7">
+          <div className="landing-intro text-center space-y-5 mb-12">
+            <div className="hero-logo inline-flex items-center justify-center">
+              <SunshineLogo className="size-20" />
             </div>
-            <h1 className="text-4xl font-bold tracking-tight">Illuminate Your Code with AI</h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto text-balance">
+            <h1 className="text-3xl sm:text-5xl font-semibold tracking-tight text-balance leading-[1.14]">Illuminate Your Code <span className="hero-title-tail">with AI</span></h1>
+            <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-2xl mx-auto text-balance">
               Upload your log files or zipped codebase to get intelligent insights on errors,
               logging quality, sensitive data exposure, and more.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="paste-logs" className="text-sm font-medium">
-                Paste Logs from Terminal
-              </label>
+          <div className="space-y-6">
+            <div className="terminal-panel">
+              <div className="terminal-toolbar">
+                <label htmlFor="paste-logs" className="flex items-center gap-2 text-sm font-medium">
+                  <Terminal className="size-4 text-muted-foreground" /> Paste Logs from Terminal
+                </label>
+                <span className="text-xs text-muted-foreground hidden sm:block">{pastedLogs.length.toLocaleString("en-US")} / 200,000 characters</span>
+              </div>
               <Textarea
                 id="paste-logs"
-                placeholder="Paste your logs here..."
+                placeholder={"Paste your logs here...\n\n[INFO] Application started\n[WARN] Request took longer than expected\n[ERROR] Connection timeout"}
                 value={pastedLogs}
                 onChange={(e) => {
                   const v = e.target.value
@@ -380,10 +388,10 @@ export default function Home() {
                   }
                   setPastedLogs(v)
                 }}
-                className="min-h-[200px] font-mono text-sm resize-y"
+                className="log-input min-h-[200px] font-mono text-sm resize-y"
               />
               {pastedLogs.trim() && (
-                <p className="text-xs text-muted-foreground">
+                <p className="px-5 pb-4 text-xs text-muted-foreground" aria-live="polite">
                   {pastedLogs.split("\n").filter((line) => line.trim()).length} log lines detected
                 </p>
               )}
@@ -395,16 +403,16 @@ export default function Home() {
                   <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or upload files</span>
+                  <span className="bg-background px-4 text-muted-foreground tracking-wider text-[10px] font-medium">Or upload files</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* File Upload and Team Rules Side by Side */}
-          <div className="flex gap-6 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_280px] gap-5 items-stretch">
             {/* File Upload Area */}
-            <div className="flex-1">
+            <div className="min-w-0">
               {files.length === 0 && (
                 <FileUploadArea onFilesAdded={handleFilesAdded} />
               )}
@@ -432,54 +440,50 @@ export default function Home() {
             </div>
 
             {/* Team Rules - Outside and to the right */}
-            <div className="flex-shrink-0">
+            <div className="min-w-0">
               <RulesSection />
             </div>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground mb-4">
-              Select Analysis Types {selectedAnalysisTypes.length > 0 && `(${selectedAnalysisTypes.length} selected)`}
-          </h3>
+          <div className="analysis-heading flex items-center justify-between gap-4 pt-5">
+            <h2 className="text-lg font-semibold tracking-tight">Select Analysis Types</h2>
+            <span className="text-xs text-muted-foreground" aria-live="polite">{selectedAnalysisTypes.length ? `${selectedAnalysisTypes.length} selected` : "Choose your focus"}</span>
+          </div>
 
-          {/* Feature Selection (Styled like the image) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {features.map(({ id, icon: Icon, title, description, color, iconColor, borderColor }) => {
+          <div className="analysis-options grid grid-cols-1 md:grid-cols-2">
+            {features.map(({ id, icon: Icon, title, description, iconColor }) => {
               const isSelected = selectedAnalysisTypes.includes(id)
               return (
-                <div
+                <button
                   key={id}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => handleAnalysisTypeSelection(id)}
-                  className={`relative rounded-lg p-6 space-y-2 cursor-pointer border-1 
-                    ${isSelected ? `border-black ring-2 ring-black` : `border-gray-300`}`}        
+                  className={`analysis-option relative flex items-start gap-3 cursor-pointer text-left ${isSelected ? "is-selected" : ""}`}
                 >
-                  <div className={`size-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
-                    <Icon className={`size-5 ${iconColor}`} />
-                  </div>
-                  <h3 className="font-semibold text-foreground">{title}</h3>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 rounded-full bg-black text-white p-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
+                  <Icon className={`size-[18px] shrink-0 mt-0.5 ${iconColor}`} />
+                  <span className="flex-1 min-w-0 space-y-1">
+                    <span className="block font-semibold text-sm text-foreground">{title}</span>
+                    <span className="block text-sm leading-relaxed text-muted-foreground">{description}</span>
+                  </span>
+                  <span className={`selection-indicator size-[18px] shrink-0 mt-0.5 rounded border flex items-center justify-center ${isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/50"}`} aria-hidden="true">
+                    {isSelected && <Check className="size-3" />}
+                  </span>
+                </button>
               )
             })}
           </div>
 
-          {hasInput && (
-            <div className="flex items-center justify-between pt-4">
+            <div className="analysis-actions flex flex-col sm:flex-row gap-4 sm:items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                {pastedLogs.trim()
+                {!hasInput ? "Add logs or files to get started." : pastedLogs.trim()
                   ? `${pastedLogs.split("\n").filter((line) => line.trim()).length} log lines ready`
                   : extractedFiles.filter((f) => f.selected).length > 0
                   ? `${extractedFiles.filter((f) => f.selected).length} files selected from ZIP`
                   : `${files.length} ${files.length === 1 ? "file" : "files"} ready`}{" "}
-                for analysis
+                {hasInput && "for analysis"}
               </p>
-              <Button size="lg" onClick={handleAnalyze} disabled={isAnalyzing} className="gap-2">
+              <Button size="lg" onClick={handleAnalyze} disabled={!hasInput || isAnalyzing} className="gap-3">
                 {isAnalyzing ? (
                   <>
                     <div className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -487,15 +491,18 @@ export default function Home() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="size-4" />
                     Generate Report
+                    <ArrowRight className="size-4" />
                   </>
                 )}
               </Button>
             </div>
-          )}
         </div>
       </main>
+      <footer className="mx-auto w-full max-w-4xl border-t border-border px-5 py-6 flex items-center justify-between text-xs text-muted-foreground">
+        <span className="flex items-center gap-2"><SunshineLogo className="size-5" /> Sunshine Trace</span>
+        <span>AI-powered debugging insights</span>
+      </footer>
     </div>
   )
 }

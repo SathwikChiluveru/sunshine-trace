@@ -100,7 +100,7 @@ const summaryMetricsData = {
 };
 
 app.get('/api/summary/metrics', (req, res) => {
-  res.json(summaryMetricsData);
+  res.json({ ...summaryMetricsData, isSample: true });
 });
 
 // AI Analysis endpoint

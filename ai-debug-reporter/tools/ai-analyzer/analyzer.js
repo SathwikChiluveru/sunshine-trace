@@ -4,21 +4,21 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Provider selection: prefer OpenRouter if key present, else internal vLLM
+// Provider selection: prefer OpenRouter if key present, else a configured local model
 const OR_ENABLED   = !!process.env.OPENROUTER_API_KEY;
 const OR_BASE      = process.env.OPENROUTER_API_BASE || 'https://openrouter.ai/api/v1';
 const OR_MODEL     = process.env.OPENROUTER_MODEL     || 'qwen/qwen3-30b-a3b-instruct-2507';
 const OR_SITE_URL  = process.env.OPENROUTER_SITE_URL  || 'http://localhost:3000';
 const OR_SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'Sunshine Trace';
 
-// const DEVNET_BASE  = process.env.AI_API_BASE || 'http://genaillm02.devnet.int:11435/v1';
-// const DEVNET_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
-// const DEVNET_KEY   = process.env.AI_API_KEY  || 'local';
+const LOCAL_BASE  = process.env.AI_API_BASE || 'http://localhost:11435/v1';
+const LOCAL_MODEL = process.env.AI_MODEL    || 'Qwen/Qwen3-Coder-30B-A3B-Instruct';
+const LOCAL_KEY   = process.env.AI_API_KEY  || 'local';
 
-const PROVIDER     = OR_ENABLED ? 'openrouter' : 'devnet';
-const API_BASE     = OR_ENABLED ? OR_BASE : DEVNET_BASE;
-const MODEL        = OR_ENABLED ? OR_MODEL : DEVNET_MODEL;
-const API_KEY      = OR_ENABLED ? process.env.OPENROUTER_API_KEY : DEVNET_KEY;
+const PROVIDER     = OR_ENABLED ? 'openrouter' : 'local';
+const API_BASE     = OR_ENABLED ? OR_BASE : LOCAL_BASE;
+const MODEL        = OR_ENABLED ? OR_MODEL : LOCAL_MODEL;
+const API_KEY      = OR_ENABLED ? process.env.OPENROUTER_API_KEY : LOCAL_KEY;
 
 async function chat(system, user) {
   const url = `${API_BASE}/chat/completions`;
@@ -351,7 +351,7 @@ function normalizeAIResponse(response, analysisType) {
 
 // Normalize sensitive data responses
 function normalizeSensitiveDataResponse(response) {
-  // Handle both devnet and openrouter formats
+  // Handle both local and OpenRouter formats
   if (response.detections && Array.isArray(response.detections)) {
     // Already in correct format
     return response;
@@ -376,7 +376,7 @@ function normalizeSensitiveDataResponse(response) {
 
 // Normalize vulnerability responses
 function normalizeVulnerabilityResponse(response) {
-  // Handle both devnet and openrouter formats
+  // Handle both local and OpenRouter formats
   if (response.vulnerabilities && Array.isArray(response.vulnerabilities)) {
     // Ensure each vulnerability has required fields and prefer concrete code fixes
     const normalizedVulns = response.vulnerabilities.map(vuln => ({
@@ -409,7 +409,7 @@ function normalizeVulnerabilityResponse(response) {
 
 // Normalize code quality responses
 function normalizeCodeQualityResponse(response) {
-  // Handle both devnet and openrouter formats
+  // Handle both local and OpenRouter formats
   if (response.quality_score !== undefined || response.qualityScore !== undefined) {
     const normalizedMetrics = {
       complexity: response.metrics?.complexity || 0,

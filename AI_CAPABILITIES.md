@@ -179,7 +179,7 @@ The frontend automatically:
 ### Environment Variables
 ```bash
 # AI Model Configuration
-AI_API_BASE=http://genaillm02.devnet.int:11435/v1
+AI_API_BASE=http://localhost:11435/v1
 AI_MODEL=Qwen/Qwen3-Coder-30B-A3B-Instruct
 AI_API_KEY=local
 ```

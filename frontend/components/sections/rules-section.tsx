@@ -59,9 +59,9 @@ export function RulesSection() {
   }, [bundle, selectedTeam]);
 
   return (
-    <div className="w-80 bg-background border border-border rounded-lg p-4 space-y-3">
+    <div className="team-rules h-full w-full p-5 space-y-5">
       <div className="flex items-center gap-2">
-        <div className="size-8 rounded-lg flex items-center justify-center bg-purple-50 dark:bg-purple-950">
+        <div className="flex items-center justify-center pr-1">
           <Settings className="size-4 text-purple-600 dark:text-purple-400" />
         </div>
         <div className="flex-1">
@@ -83,10 +83,11 @@ export function RulesSection() {
               const f = e.target.files?.[0];
               if (f) onFile(f);
             }}
-            className="h-8 text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-950 dark:file:text-purple-300"
+            className="h-10 text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-950 dark:file:text-purple-300"
           />
         </div>
 
+        {!bundle && <p className="text-xs leading-relaxed text-muted-foreground border-t border-border pt-4">Import your team’s rules to tailor the analysis to your standards.</p>}
         {bundle && (
           <div className="space-y-2">
             <div className="space-y-1">

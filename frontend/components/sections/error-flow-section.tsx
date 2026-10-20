@@ -52,7 +52,7 @@ export function ErrorFlowSection({ data }: ErrorFlowSectionProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span>{new Date().toISOString()}</span> {/* Add a real timestamp if available */}
+                    <span>{flow.timestamp || "Timestamp unavailable"}</span>
                     <span>•</span>
                     <span>{flow.path.length} occurrences</span> {/* Assuming occurrences are length of path */}
                   </div>
@@ -80,7 +80,7 @@ export function ErrorFlowSection({ data }: ErrorFlowSectionProps) {
                   <div className="bg-muted rounded-md p-4 font-mono text-xs overflow-x-auto">
                     {flow.path.map((log: string, idx: number) => (
                       <div key={idx} className="text-muted-foreground">
-                        [{new Date().toISOString()}] <span style={{ color: "var(--warning)" }}>{log}</span>
+                        {flow.timestamp && <>[{flow.timestamp}] </>}<span style={{ color: "var(--warning)" }}>{log}</span>
                       </div>
                     ))}
                   </div>

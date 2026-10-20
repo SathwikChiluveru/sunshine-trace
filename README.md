@@ -108,9 +108,10 @@ npm run report:render  # render HTML report from findings + summary
 node index.js          # start Express API on port 5000
 ```
 Environment variables:
+- The frontend forwards analysis and report requests through its own `/api` routes. Set the server-side `API_BASE_URL` to your backend origin when needed (defaults to `http://localhost:5000`). Run `node index.js` in `ai-debug-reporter` for the local report service. If the service is offline, the report shows an unavailable state; local log analysis remains available.
 - `OPENROUTER_API_KEY` (required for OpenRouter).
 - `OPENROUTER_API_BASE`, `OPENROUTER_MODEL`, `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME` (optional overrides).
-- `AI_API_BASE`, `AI_MODEL`, `AI_API_KEY` (for internal vLLM; uncomment the DEVNET constants in `analyzer.js` if using this path).
+- `AI_API_BASE`, `AI_MODEL`, `AI_API_KEY` (for a local or self-hosted OpenAI-compatible model; defaults to localhost when no OpenRouter key is configured).
 
 ## Setup & Installation
 1. **Prerequisites**
@@ -239,10 +240,10 @@ app.post('/api/analyze/file', async (req, res) => {
 ```
 
 ## Best Practices & Notes
-- Replace the committed sample `OPENROUTER_API_KEY` immediately; treat `.env` as sensitive and list it in `.gitignore`. The system primarily uses Devnet vLLM, but if it’s unavailable, you can comment out the relevant section and use OpenRouter as a fallback.
+- Keep API keys in environment variables and list `.env` in `.gitignore`. Configure an OpenRouter key to use OpenRouter, or set `AI_API_BASE`, `AI_MODEL`, and `AI_API_KEY` for a local or self-hosted model.
 - `reports/` contents are generated artifacts—avoid committing production data containing PII. Redirect output to a secure storage bucket if needed.
 - The zero-risk fallback logic is deterministic; monitor logs for `[AI]` prefixed messages to understand when the LLM fails and heuristics take over.
-- When enabling the internal vLLM path, uncomment and validate the `DEVNET_*` constants inside `analyzer.js`; otherwise OpenRouter must remain configured.
+- For a self-hosted model, set `AI_API_BASE`, `AI_MODEL`, and `AI_API_KEY`; OpenRouter is selected when `OPENROUTER_API_KEY` is configured.
 
 ## License and Credits
 - Backend `package.json` declares the **ISC** license, but no root `LICENSE` file is present—add one before distributing.

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { ArrowUpRight } from "lucide-react"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { SummarySection } from "@/components/sections/summary-section"
@@ -16,9 +17,10 @@ import { RecommendationsSection } from "@/components/sections/recommendations-se
 import type { ParsedLogData } from "@/lib/types"
 
 export default function DebugReport() {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000"
+  const API_BASE = ""
   console.log("[Report] API_BASE:", API_BASE)
   const [activeSection, setActiveSection] = useState("summary")
+  const [reportUnavailable, setReportUnavailable] = useState(false)
   const [selectedAnalysisTypes, setSelectedAnalysisTypes] = useState<string[] | null>(null)
   const [logData, setLogData] = useState<ParsedLogData | null>(null)
   const [summaryData, setSummaryData] = useState<any>(null)
@@ -29,12 +31,7 @@ export default function DebugReport() {
   const [aiZipResults, setAiZipResults] = useState<any>(null)
   const [hasDynamicSummary, setHasDynamicSummary] = useState(false)
   const [hasDynamicFindings, setHasDynamicFindings] = useState(false)
-  const [hasLocalParsed, setHasLocalParsed] = useState<boolean>(() => {
-    try {
-      if (typeof window === 'undefined') return false
-      return !!localStorage.getItem('debugReportData')
-    } catch { return false }
-  })
+  const [hasLocalParsed, setHasLocalParsed] = useState(false)
   const summaryReqId = useRef(0)
   const findingsReqId = useRef(0)
 
@@ -720,14 +717,17 @@ export default function DebugReport() {
     const localId = ++summaryReqId.current
     const ctrl = new AbortController()
     fetch(`${API_BASE}/api/summary`, { signal: ctrl.signal })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Report unavailable")
+        return response.json()
+      })
       .then((data) => {
         if (localId !== summaryReqId.current) return
         if (!hasDynamicSummary && !summaryData) setSummaryData(data)
         console.log("[Report] Fetched remote summary (fallback)")
       })
       .catch((error) => {
-        if (error?.name !== 'AbortError') console.error("Error fetching summary data:", error)
+        if (!ctrl.signal.aborted) setReportUnavailable(true)
       })
     return () => ctrl.abort()
   }, [summaryData, aiZipResults, API_BASE, hasDynamicSummary, hasLocalParsed])
@@ -774,7 +774,10 @@ export default function DebugReport() {
     const localId = ++findingsReqId.current
     const ctrl = new AbortController()
     fetch(`${API_BASE}/api/findings`, { signal: ctrl.signal })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) throw new Error("Findings unavailable")
+        return response.json()
+      })
       .then((data) => {
         if (localId !== findingsReqId.current) return
         if (hasDynamicFindings) return
@@ -790,7 +793,7 @@ export default function DebugReport() {
         }
         setFindingsData(gated)
         setRecurringProblems(data.recurringProblems)
-        const heatmapData = data.riskHeatmap.map((module: any) => ({
+        const heatmapData = (data.riskHeatmap || []).map((module: any) => ({
           name: module.module.split("\\").pop() || module.module, // Extract module name
           score: module.risk, // Risk score
         }))
@@ -798,18 +801,32 @@ export default function DebugReport() {
         console.log("[Report] Fetched remote findings (fallback)")
       })
       .catch((error) => {
-        if (error?.name !== 'AbortError') console.error("Error fetching findings data:", error)
+        if (!ctrl.signal.aborted) setReportUnavailable(true)
       })
     return () => ctrl.abort()
   }, [aiZipResults, API_BASE, hasDynamicFindings, hasLocalParsed, selectedAnalysisTypes])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="report-page min-h-screen bg-background">
       <Header overallScore={logData?.summary.overallScore} logData={logData} />
-      <div className="flex flex-col lg:flex-row">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection}/>
-        <main className="flex-1 ml-64 pt-20 px-8 pb-16">
+      <div className="report-shell flex flex-col lg:flex-row">
+        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} selectedAnalysisTypes={selectedAnalysisTypes}/>
+        <main className="report-main flex-1 ml-64 pt-20 px-8 pb-16">
           <div className="max-w-7xl mx-auto space-y-12">
+            <div className="report-titlebar">
+              <div>
+                <h1>Analysis report</h1>
+                <p>Logging quality, error paths, and the next steps for your code.</p>
+              </div>
+              <a href="/" className="report-new-analysis">New analysis <ArrowUpRight className="size-4" aria-hidden="true" /></a>
+            </div>
+            {!summaryData && !findingsData && (
+              <div className="report-empty" role="status">
+                <h2>{reportUnavailable ? "Report service unavailable" : "Loading your report"}</h2>
+                <p>{reportUnavailable ? "Saved reports are unavailable right now. You can still paste logs on the home page for local analysis." : "Gathering the summary and findings for this analysis."}</p>
+                {reportUnavailable && <a href="/">Start a new analysis</a>}
+              </div>
+            )}
             <section id="summary">
             {summaryData && (
                 <SummarySection

@@ -22,21 +22,21 @@ import type { ParsedLogData } from "@/lib/types"
         ? sq.gaps[0]
         : (Array.isArray(sq.issues) && sq.issues.length > 0 ? sq.issues[0] : "No issues found"),
     }))
-  
+
     const getScoreColor = (score: number) => {
       if (score >= 80) return "success"
       if (score >= 60) return "warning"
       return "error"
     }
-  
+
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold text-balance mb-2">Logging Quality</h2>
           <p className="text-muted-foreground text-pretty">Analyze observability strength across your modules</p>
         </div>
-  
-        <Card className="overflow-hidden">
+
+        <Card className="report-table overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted/50 border-b border-border">
@@ -49,6 +49,7 @@ import type { ParsedLogData } from "@/lib/types"
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
+                {modules.length === 0 && <tr><td colSpan={5} className="px-6 py-10 text-center text-sm text-muted-foreground">No module quality results are available for this analysis.</td></tr>}
                 {modules.map((module: any) => (
                   <tr key={module.name} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4">
@@ -88,4 +89,4 @@ import type { ParsedLogData } from "@/lib/types"
         </Card>
       </div>
     )
-  }  
+  }

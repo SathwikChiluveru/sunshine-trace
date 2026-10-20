@@ -43,7 +43,7 @@ export function SensitiveDataSection({ data }: SensitiveDataSectionProps) {
         </Card>
       ) : (
         <>
-          <Card className="overflow-hidden">
+          <Card className="report-table overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-muted/50 border-b border-border">
@@ -72,8 +72,8 @@ export function SensitiveDataSection({ data }: SensitiveDataSectionProps) {
                           variant="outline"
                           className="border-0"
                           style={{
-                            backgroundColor: `var(--${getSeverityColor('critical')})/0.1`,
-                            color: `var(--${getSeverityColor('critical')})`,
+                            backgroundColor: `color-mix(in oklch, var(--${getSeverityColor(detection.type === 'NRIC' ? 'critical' : 'high')}) 10%, transparent)`,
+                            color: `var(--${getSeverityColor(detection.type === 'NRIC' ? 'critical' : 'high')})`,
                           }}
                         >
                           {detection.type === 'NRIC' ? 'Critical' : 'High'}
